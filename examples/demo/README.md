@@ -44,3 +44,25 @@ for PDF generation, and fonts with Korean glyphs for the demo's final screen.
 ASR output can vary with engine versions and decoding. The saved review report
 is an example of an image-based proposal; do not manufacture an audio-verified
 approval to make a reproduction match this example.
+
+## Transcription configuration
+
+| Field | Published demo |
+| --- | --- |
+| Source | Controlled synthetic video, 13.74625 seconds; synthesized English narration over actual Python execution screens. |
+| Client/backend | Linux client calling the authenticated remote ASR API; exported `backend=remote`, `server_backend=mlx`. |
+| ASR model | OpenAI Whisper large-v3; exported compatible model label `mlx-community/whisper-large-v3-mlx`. |
+| Weight source | Official OpenAI large-v3 checkpoint, SHA-256 verified, converted locally to MLX weights. |
+| Computation | Native MLX worker, FP16 weights/decoding. |
+| Task/language | `task=transcribe`, `language_requested=en`, `language=en`, `multilingual=false`. |
+| Audio | Mono 16 kHz PCM16 WAV; normalized float32 input to ASR. |
+| Timing | Engine segment and word timestamps; five original ASR segments preserved. |
+| VAD | No separate baseline prefilter; optional Silero coverage audit performed afterward. |
+| Visual sampling | 0.5-second sampling, 3-second periodic images, tile threshold 0.03; three additional dense frames. |
+| Review | Separate image-based proposal, deferred decision; image coverage 2/5 segments, audio coverage 0/5. |
+
+See [transcript.json](transcript.json) for saved transcript metadata and
+[the transcription specification](../../docs/TRANSCRIPTION.md) for the checkpoint
+hash and decoding behavior. Full library versions and effective decoder settings
+were not embedded in this demo's exported transcript; the specification's inspected
+library defaults should not be treated as a version manifest for that earlier run.

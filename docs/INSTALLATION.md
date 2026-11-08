@@ -21,6 +21,9 @@ automated server installer uses macOS LaunchAgents; it is not a generic Linux or
 Windows server installer. Do not run it on an unsupported host. Local CPU/Docker
 processing and client-side exports remain independent of that server adapter.
 
+Before choosing an engine, see [the transcription specification](TRANSCRIPTION.md)
+for default model IDs, computation types, language behavior, and recorded provenance.
+
 ## Install with an agent
 
 Codex, Claude Code, or another agent with terminal and file access can install and

@@ -34,6 +34,34 @@ This is an early release. Visual changes are pixel-based candidates, not semanti
 understanding. ASR can omit or misrecognize speech. Review helps investigate these
 errors; it does not guarantee a complete or accurate transcript.
 
+## Transcription specification
+
+The default ASR model is **OpenAI Whisper large-v3** (approximately 1.55 billion
+parameters). The model and the inference engine are separate choices: the portable
+default uses faster-whisper/CTranslate2, while MLX is an optional implementation.
+See [OpenAI's model information](https://github.com/openai/whisper#available-models-and-languages).
+
+| Setting | Current specification |
+| --- | --- |
+| Local default | `faster-whisper`, model `large-v3` (`Systran/faster-whisper-large-v3`), CPU, `int8`. |
+| Optional local MLX | `mlx-whisper`, model `mlx-community/whisper-large-v3-mlx`, Apple Silicon; FP16 decoding by upstream default. |
+| Managed remote service | Server-selected Whisper model; default installer uses official large-v3 weights converted to MLX FP16. Optional native CPU worker uses faster-whisper INT8. |
+| Audio input to ASR | Full recording's selected audio stream, mono 16 kHz PCM16 WAV, converted to normalized float32 samples for inference. |
+| Task and languages | `transcribe`, original language; `auto` or an explicit Whisper language code. Per-window mixed-language detection is a faster-whisper option. |
+| Timing | Segment and word timestamps from the ASR engine, mapped to the common audio/video timeline. No separate WhisperX forced-alignment stage. |
+| Speech detection | No separate VAD prefilter for the baseline; engine silence heuristics still apply. Optional Silero VAD audit flags possible uncovered speech. |
+| Visual context | Screen images/OCR are review evidence; they are not fed into Whisper or used to silently rewrite the baseline. |
+| Published demo | Remote MLX large-v3, official checkpoint converted to FP16, English; see [the demo's exact configuration](examples/demo/README.md#transcription-configuration). |
+
+Model weights download on first use. `--model` selects a compatible repository or
+local model directory; `--device` and `--compute-type` configure local faster-whisper.
+Remote clients use server hardware/precision, not these local flags. Decoder
+settings not explicitly configured by this project inherit engine defaults.
+
+The [full transcription specification](docs/TRANSCRIPTION.md) records model sources,
+checkpoint verification, decoder defaults and versions inspected, long-recording
+behavior, timestamp limitations, output metadata, and reproducibility boundaries.
+
 ## Quick start: local transcription
 
 Prefer to let an agent install it? Copy a setup request from
@@ -183,6 +211,7 @@ not repair pre-existing audio delay or clock drift.
 ## Documentation and development
 
 - [Installation and shared serving](docs/INSTALLATION.md)
+- [Transcription models, settings, and provenance](docs/TRANSCRIPTION.md)
 - [Workflows, CLI examples, Python API, and MCP](docs/WORKFLOWS.md)
 - [Natural-language agent guide](docs/AGENT_GUIDE.md)
 - [Agent operating instructions](AGENTS.md)
