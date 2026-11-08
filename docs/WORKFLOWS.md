@@ -143,6 +143,29 @@ the baseline observations and included in subsequent image-bearing exports.
 Audio clips retain exact source timeline coordinates; no new silence is invented
 where the recording has no audio samples.
 
+## Export formats
+
+```sh
+please-transcribe export --work work/session --output work/session/exports \
+  --formats md,html,pdf,json,srt,vtt
+```
+
+Markdown and JSON use companion image folders; keep those folders when sharing
+the output. HTML embeds its images in one file. Subtitles retain the original
+ASR text rather than replacing it with review proposals.
+
+For local PDF export, install the extra and its browser in your environment:
+
+```sh
+python -m pip install -e '.[pdf]'
+python -m playwright install chromium
+```
+
+On Linux, you may also need `python -m playwright install-deps chromium`.
+Install fonts that cover your recording's languages. PDF prints the plain HTML
+using Chromium's default layout. Other formats do not need a browser.
+For a Docker image with PDF support, build with `--build-arg WITH_PDF=1`.
+
 ## Python and MCP
 
 The shared API is `avtimeline.api`: `get_context`, `clip_audio`, `dense_frames`,
