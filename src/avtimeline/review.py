@@ -156,11 +156,13 @@ def import_response(work: Path, response: dict) -> Path:
     return path
 
 
-def run_command(work: Path, argv: list[str], *, timeout: float = 600) -> Path:
+def run_command(work: Path, argv: list[str], *, timeout: float = 600,
+                request_path: str = "review/request.json") -> Path:
     """Opt-in wrapper protocol: JSON on stdin, one response JSON on stdout."""
     if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
         raise ValueError("--command-json must be a nonempty JSON array of command arguments")
-    request = read_json(work / "review" / "request.json")
+    from .storage import asset_path
+    request = read_json(asset_path(work, request_path))
     current = read_json(work / "timeline.json")
     if request["snapshot"] != current["snapshot"]:
         raise ValueError("Review bundle is stale; regenerate it before running a harness")

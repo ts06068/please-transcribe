@@ -13,7 +13,7 @@ from Git. The public synthetic demo contains no private recording or credentials
 | Independent remote serving | Actual Docker controller stop unloaded the native model; start reloaded it. SSH reinstall preserved keys and the existing worker when unchanged. Latest service recovered a lost client receipt using the same job without recomputation. HTTP tests cover job ownership, queue limits, failed/expired job retry, and attempt history. |
 | URL and batch input | Actual HTTP video download plus local recording and missing input produced two completed items and one isolated failure, with six formats for each success. Repetition reused downloads and transcripts. Latest tests also exercise URL metadata preflight and cache validation. |
 
-Latest full regression results: **43 tests passed, zero skipped** on Linux ARM64
+Initial release regression results: **43 tests passed, zero skipped** on Linux ARM64
 with media/CPU/PDF/URL/MCP dependencies; **43 tests run, four skipped** on macOS
 without local FFmpeg/Chromium. The client Docker image was built with PDF support.
 Korean and Spanish synthetic recordings were separately transcribed in their
@@ -28,3 +28,26 @@ containers do not expose Apple's Metal acceleration; Docker controls its lifecyc
 
 Other model-serving and development containers remained healthy. No unrelated
 model-serving configuration or private-network route was changed.
+
+## Agent polishing, cloud inputs, and YouTube (2026-11-09)
+
+- Linux ARM64 with all optional test dependencies: **55 tests passed, zero skipped**.
+  macOS: **55 tests run, four optional media/PDF tests skipped**.
+- Actual MCP SDK calls exercised polish preparation, review submission, acceptance
+  decisions, and polished JSON export. Regression tests verify all five browser-free
+  formats, original-file preservation, conflict rejection, and segment-only timing
+  for corrected words. The existing wrapper protocol also received a focused request
+  and returned an imported fixture-agent response.
+- A real demo video was processed through a read-only external Docker bind mount,
+  without an intake video copy. Original and polished exports completed in all six
+  formats, including PDF; this integration reused the saved demo ASR as a fixture.
+- A live public YouTube video was downloaded with Node.js/EJS, then transcribed by
+  the remote MLX large-v3 service and exported in all six formats. URL cache reuse,
+  common YouTube URL forms, runtime selection, and Unicode download paths are tested.
+- Read-only rclone command construction, VFS disk-cache disabling, existing-file
+  protection, and Windows drive-letter handling are tested. Live Google/Microsoft
+  account authentication and OS FUSE/WinFsp mounting were not performed. These remain
+  operator setup requirements; the application reuses an existing rclone configuration.
+
+No external YouTube recording or transcript is included in the repository. The
+published demo and its image-only review provenance remain unchanged.

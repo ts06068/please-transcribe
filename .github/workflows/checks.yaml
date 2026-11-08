@@ -36,5 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -t avtimeline .
       - run: docker run --rm avtimeline --help
+      - run: docker run --rm --entrypoint python avtimeline -c "from avtimeline.intake import javascript_runtime; import yt_dlp_ejs; assert javascript_runtime() is not None"
       - run: docker build -f Dockerfile.client -t please-transcribe-client .
       - run: docker run --rm please-transcribe-client --help
+      - run: docker run --rm --entrypoint python please-transcribe-client -c "from avtimeline.intake import javascript_runtime; import yt_dlp_ejs; assert javascript_runtime() is not None"

@@ -12,6 +12,8 @@ work/
 *.key
 client.json
 api-keys.json
+rclone.conf
+.rclone/
 *.credentials.json
 .please-transcribe/
 *.mp4

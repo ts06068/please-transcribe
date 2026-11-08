@@ -22,7 +22,7 @@ media = ["av>=14,<20", "numpy>=1.26,<3", "Pillow>=10,<13"]
 cpu = ["faster-whisper>=1.1,<2"]
 mlx = ["mlx-whisper>=0.4,<1; sys_platform == 'darwin' and platform_machine == 'arm64'"]
 pdf = ["playwright>=1.49,<2"]
-url = ["yt-dlp>=2025.1.15"]
+url = ["yt-dlp[default]>=2026.10.26"]
 mcp = ["mcp>=1.9,<2"]
 
 [project.scripts]

@@ -4,6 +4,8 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import json
+import importlib.util
+import shutil
 import subprocess
 import sys
 import threading
@@ -17,11 +19,33 @@ def is_url(source: str) -> bool:
     return urllib.parse.urlsplit(str(source)).scheme in ("http", "https")
 
 
+def is_youtube(source: str) -> bool:
+    host = (urllib.parse.urlsplit(source).hostname or "").lower().rstrip(".")
+    return host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
+
+
+def javascript_runtime() -> dict | None:
+    for name, minimum in (("deno", (2, 3, 0)), ("node", (22, 0, 0))):
+        executable = shutil.which(name)
+        if executable is None:
+            continue
+        try:
+            result = subprocess.run([executable, "--version"], capture_output=True, text=True,
+                                    encoding="utf-8", timeout=5)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        version = re.search(r"(\d+)\.(\d+)\.(\d+)", result.stdout)
+        if result.returncode == 0 and version and tuple(map(int, version.groups())) >= minimum:
+            return {"name": name, "version": version.group(), "path": executable}
+    return None
+
+
 def resolve(source: str, work: Path, progress=None) -> Path:
     if not is_url(source):
         path = Path(source).expanduser().resolve()
         if not path.is_file():
-            raise ValueError(f"Input recording does not exist: {path}")
+            raise ValueError(f"Input recording does not exist or is unavailable: {path}. "
+                             "For cloud recordings, keep the mount connected and readable.")
         return path
     parsed = urllib.parse.urlsplit(source)
     if not parsed.hostname or parsed.username or parsed.password:
@@ -52,9 +76,20 @@ def resolve(source: str, work: Path, progress=None) -> Path:
         import yt_dlp  # noqa: F401
     except ImportError:
         raise ValueError("URL inputs need the url extra: python -m pip install '.[url]'") from None
+    runtime = javascript_runtime()
+    if is_youtube(source):
+        if runtime is None:
+            raise ValueError("YouTube input needs Node.js 22+ or Deno 2.3+ on PATH; "
+                             "the provided Docker images include Node.js")
+        if importlib.util.find_spec("yt_dlp_ejs") is None:
+            raise ValueError("YouTube input needs the challenge solver: python -m pip install -U '.[url]'")
+    common = [sys.executable, "-m", "yt_dlp", "--ignore-config", "--encoding", "utf-8",
+              "--socket-timeout", "30", "--retries", "2", "--extractor-retries", "2"]
+    if runtime:
+        common += ["--js-runtimes", runtime["name"]]
     # yt-dlp resumes .part files and performs the platform-specific extraction.
     # URL query strings and credentials are never copied into public manifests.
-    command = [sys.executable, "-m", "yt_dlp", "--no-playlist", "--no-warnings", "--newline",
+    command = common + ["--no-playlist", "--no-warnings", "--newline",
                "--continue", "--paths", str(target.resolve()), "--output", "source.%(ext)s",
                "--merge-output-format", "mp4", "--print", "after_move:filepath", "--", source]
     process = None
@@ -64,16 +99,17 @@ def resolve(source: str, work: Path, progress=None) -> Path:
     if reporter:
         reporter.start()
     try:
-        metadata_command = [sys.executable, "-m", "yt_dlp", "--dump-single-json", "--skip-download",
+        metadata_command = common + ["--dump-single-json", "--skip-download",
                             "--flat-playlist", "--playlist-end", "2", "--no-playlist", "--no-warnings", "--", source]
-        process = subprocess.Popen(metadata_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(metadata_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8")
         metadata_text, _ = process.communicate()
         if process.returncode:
-            raise ValueError("URL inspection failed; check availability and downloader version")
+            raise ValueError("URL inspection failed; check video access, yt-dlp version, and YouTube "
+                             "runtime requirements. Private/login-restricted or blocked videos may be unavailable.")
         metadata = json.loads(metadata_text)
         if metadata.get("_type") in ("playlist", "multi_video"):
             raise ValueError("This URL contains multiple recordings; supply individual video URLs to batch")
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8")
         stdout, stderr = process.communicate()
     except BaseException:
         if process and process.poll() is None:

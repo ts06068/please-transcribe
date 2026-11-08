@@ -1,8 +1,8 @@
 # Processing and investigating recordings
 
 The executable is `please-transcribe`; `avtimeline` remains a compatible alias.
-The Python module is `avtimeline`. Every workflow preserves original-language ASR
-text; reviews and decisions are separate. Exported HTML uses native components
+The Python module is `avtimeline`. The baseline preserves original-language ASR
+text; reviews, decisions, and explicit polished exports are separate. Exported HTML uses native components
 and extracted images, with no styles or scripts.
 
 ## Diagnose before loading a model
@@ -59,10 +59,19 @@ without `--audit` and explicitly report that audit coverage was unavailable.
 
 ## URL input and batch
 
+### YouTube and other URLs
+
 Install the optional URL adapter: `python -m pip install -e '.[url]'`.
+The README's default installation and both Docker images include this extra.
+For YouTube, install Node.js 22+ or Deno 2.3+ on PATH; the application detects and
+enables a supported runtime. The URL extra includes yt-dlp's EJS solver scripts.
+Both images include Node.js. Check all URL requirements with `doctor --url`.
+These follow [yt-dlp's runtime requirements](https://github.com/yt-dlp/yt-dlp/wiki/EJS).
 
 ```sh
 please-transcribe run 'https://example.org/recording.mp4' --work work/from-url
+please-transcribe run 'https://www.youtube.com/watch?v=VIDEO_ID' --work work/youtube
+please-transcribe run 'https://youtu.be/VIDEO_ID' --work work/youtube-short-link
 please-transcribe batch lecture.mp4 screencast.mkv \
   'https://example.org/demo.mp4' --output-root work/batch
 please-transcribe batch --input-list recordings.txt --output-root work/batch
@@ -79,6 +88,18 @@ Batch processing is sequential. One bad recording does not prevent the rest from
 finishing. Each source gets a stable session name, and `batch.json` plus `index.md`
 record per-item results. A batch with any failed item exits with status 1. Re-run
 the same inputs to reuse the successful sessions and retry unfinished work.
+
+You can also give the link to your agent: “Transcribe this YouTube video in its
+original language, then polish uncertain speech using the review workflow.”
+The agent runs URL intake and ASR before using the MCP review tools. Audio is
+transcribed from the downloaded recording; YouTube captions are not used as ASR.
+Only one video is selected per URL, including a watch link that also has a playlist
+parameter. Playlist-only links are rejected rather than silently dropping items.
+Watch, youtu.be, and Shorts URLs use the same intake path. Login-restricted, removed,
+region-blocked, or bot-blocked videos can fail; the application does not read browser
+cookies or attempt to bypass restrictions. User-wide yt-dlp settings are ignored
+so they cannot change the one-video/output-file contract. Update the URL extra when
+YouTube extractor changes require it: `python -m pip install -U '.[url]'`.
 
 ## Focus on uncertain speech
 
@@ -143,6 +164,20 @@ the baseline observations and included in subsequent image-bearing exports.
 Audio clips retain exact source timeline coordinates; no new silence is invented
 where the recording has no audio samples.
 
+## Polish uncertain speech
+
+```sh
+please-transcribe review polish --work work/session
+please-transcribe export --work work/session --output work/session/exports \
+  --text-version polished --formats md,html,json,srt,vtt
+```
+
+Between these commands, ask your agent to inspect the packets, submit proposals,
+and record audio-supported acceptance decisions. Only accepted corrections are
+applied under `exports/polished/`. See [the polishing workflow](POLISH.md) for
+Codex/Claude Code requests, file/MCP protocols, conflicts, and alignment limits.
+See [cloud storage](CLOUD_STORAGE.md) for source recordings on a mounted drive.
+
 ## Export formats
 
 ```sh
@@ -151,8 +186,8 @@ please-transcribe export --work work/session --output work/session/exports \
 ```
 
 Markdown and JSON use companion image folders; keep those folders when sharing
-the output. HTML embeds its images in one file. Subtitles retain the original
-ASR text rather than replacing it with review proposals.
+the output. HTML embeds its images in one file. Default subtitles retain original
+ASR text. Explicit polished exports apply only accepted audio-reviewed edits.
 
 For local PDF export, install the extra and its browser in your environment:
 
@@ -196,7 +231,7 @@ Use the Windows virtual environment executable path on Windows. Session names
 are relative to the root; paths escaping that root are rejected. Do not share a
 root containing sessions another user should not read.
 
-The tools are `get_context`, `get_screen_image`, `get_audio_excerpt`,
+The tools are `prepare_polish`, `export_polished`, `get_context`, `get_screen_image`, `get_audio_excerpt`,
 `extract_dense_frames`, `get_review_status`, `get_review_candidates`,
 `get_candidate_context`, `submit_review`, `mark_reviewed`, and `decide_candidate`.
 Screen and audio tools return actual media content. Clients without a modality

@@ -53,6 +53,12 @@ def diagnose(*, endpoint: str | None = None, connection: Path | None = None,
                 "Use a native Apple Silicon macOS host, or connect to a remote server")
     if url:
         add("yt_dlp", importlib.util.find_spec("yt_dlp") is not None, "python -m pip install '.[url]'")
+        from .intake import javascript_runtime
+        add("yt_dlp_ejs", importlib.util.find_spec("yt_dlp_ejs") is not None,
+            "python -m pip install -U '.[url]'")
+        runtime = javascript_runtime()
+        add("youtube_javascript_runtime", runtime is not None, "Install Node.js 22+ or Deno 2.3+ for YouTube",
+            runtime=runtime)
     if pdf:
         installed = importlib.util.find_spec("playwright") is not None
         add("playwright", installed, "python -m pip install '.[pdf]'")

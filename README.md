@@ -7,7 +7,7 @@ Transcribe videos in their original language and match the speech with screensho
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 [Demo](#demo) · [Features](#key-features) · [Installation](#how-to-use) ·
-[MCP](#use-with-mcp) · [Models](#transcription-specification) · [Documentation](#documentation-and-development) ·
+[MCP](#use-with-mcp) · [YouTube](#youtube) · [Models](#transcription-specification) · [Documentation](#documentation-and-development) ·
 [License](#license)
 
 ## Demo
@@ -27,6 +27,7 @@ and a matching screenshot. The [demo recording](examples/demo/README.md) uses sy
 - Link speech to screenshots taken around screen changes.
 - Export Markdown, plain HTML, PDF, JSON, SRT, and WebVTT.
 - Resume interrupted work or process several videos at once.
+- Read recordings from mounted Google Drive or OneDrive folders.
 - Review through MCP or your agent's terminal; keep suggestions separate from the original transcript.
 - Run locally on Linux, Windows, or macOS, in Docker, or through a shared server.
 
@@ -47,7 +48,7 @@ python -m venv .venv
 # Windows PowerShell instead:
 # .venv\Scripts\Activate.ps1
 
-python -m pip install -e '.[media,cpu]'
+python -m pip install -e '.[media,cpu,url]'
 please-transcribe doctor --backend faster-whisper
 please-transcribe run video.mp4 --work work/session --backend faster-whisper
 ```
@@ -89,9 +90,47 @@ The surrounding settings format depends on your client.
 
 Create a session with `run` first, or ask your agent to do it. MCP tools let the
 agent read the transcript, inspect screenshots, request audio clips, and save
-review notes. They work on existing sessions; transcription and export use the CLI.
-Ask: “Review seconds 60–75 of session `session` and flag unclear speech.”
+review notes. They work on existing sessions; transcription uses the CLI, while
+MCP can export a polished version after review.
+Ask: “Use `prepare_polish` to review unclear speech in session `session`, inspect
+the evidence, and export the accepted corrections with `export_polished`.”
 See [MCP tools and setup](docs/WORKFLOWS.md#python-and-mcp) for details.
+
+### Polish uncertain speech
+
+```sh
+please-transcribe review polish --work work/session
+```
+
+Ask Codex, Claude Code, or another agent to follow `review/polish/instructions.md`.
+It can propose corrections, inspect the audio, and accept verified changes. MCP
+provides the same workflow. [Polished exports](docs/WORKFLOWS.md#polish-uncertain-speech)
+go under `exports/polished/`; the original transcript stays intact.
+
+## YouTube
+
+Give your agent a YouTube link, or run:
+
+```sh
+please-transcribe run 'https://www.youtube.com/watch?v=VIDEO_ID' --work work/youtube
+```
+
+The video is downloaded automatically and reused on the next run. Local YouTube
+intake needs Node.js 22+ or Deno 2.3+; both Docker images include Node.js.
+See [URL setup](docs/WORKFLOWS.md#youtube-and-other-urls) for details.
+
+## Cloud recordings
+
+Configure a remote with `rclone config`, then mount it read-only in one terminal:
+
+```sh
+please-transcribe cloud mount gdrive:Recordings ~/mnt/recordings
+```
+
+In another terminal, pass the mounted video path to `run`. No separate local video
+copy is needed; audio, screenshots, and results still use a work directory.
+See [Google Drive and OneDrive setup](docs/CLOUD_STORAGE.md) for mount drivers,
+Windows examples, and use from a container.
 
 ## Transcription specification
 
@@ -118,6 +157,7 @@ currently targets macOS; local CPU use and remote clients support all three plat
 
 - [Installation](docs/INSTALLATION.md): local, Docker, shared server, and agent setup.
 - [Workflows](docs/WORKFLOWS.md): languages, batches, review, Python API, and MCP.
+- [Cloud recordings](docs/CLOUD_STORAGE.md): Google Drive and OneDrive mounts.
 - [Agent guide](docs/AGENT_GUIDE.md): requests you can give your agent.
 - [Contributing](CONTRIBUTING.md): development setup, tests, and commit conventions.
 - [Security](SECURITY.md): data handling and reporting vulnerabilities.

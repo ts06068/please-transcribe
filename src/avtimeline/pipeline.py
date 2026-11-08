@@ -119,8 +119,16 @@ def run(args, *, reporter: Progress | None = None) -> dict:
         pipeline.data["source_input"] = input_id
         write_json(pipeline.path, pipeline.data)
         progress.emit("started", "input")
-        source = intake.resolve(source_value, work, progress)
-        source_hash = file_hash(source)
+        input_stopped = threading.Event()
+        input_heartbeat = threading.Thread(target=progress.heartbeat,
+            args=("input", input_stopped, time.monotonic()), daemon=True)
+        input_heartbeat.start()
+        try:
+            source = intake.resolve(source_value, work, progress)
+            source_hash = file_hash(source)
+        finally:
+            input_stopped.set()
+            input_heartbeat.join()
         if pipeline.data.get("source_sha256") not in (None, source_hash):
             raise ValueError("Source recording changed; use a new session to preserve the old baseline")
         pipeline.data["source_sha256"] = source_hash

@@ -133,6 +133,10 @@ or memory benchmark for this project; evaluate your own media and hardware.
 Remote transcripts additionally record `server_backend`. The JSON export includes
 these fields under `transcript`; it also includes the source hash/time origin under
 `manifest`. SRT/VTT contain speech/times, not a full execution manifest.
+These defaults describe original ASR. Explicit [polished exports](POLISH.md) apply
+accepted audio-reviewed corrections to a separate view, preserving the complete
+original transcript in JSON. Corrected segments retain their segment times but
+do not claim new word alignment or ASR scores.
 
 The current transcript schema does **not** automatically record all installed
 package versions, resolved model revisions/hashes, precision, hardware, or effective

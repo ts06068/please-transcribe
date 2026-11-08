@@ -72,6 +72,11 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="please-transcribe", description="Multilingual audio/video evidence timeline")
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    cloud = commands.add_parser("cloud", help="Read cloud recordings through an rclone mount")
+    cloud_actions = cloud.add_subparsers(dest="action", required=True)
+    mount = cloud_actions.add_parser("mount", help="Mount a configured remote read-only without a video disk cache")
+    mount.add_argument("remote", help="Configured rclone remote, e.g. gdrive:Recordings")
+    mount.add_argument("mountpoint", help="Empty directory, or a Windows drive such as X:")
     connect = commands.add_parser("connect", help="Save and verify a private remote-server profile")
     connect.add_argument("--endpoint", required=True)
     connect.add_argument("--api-key-file", type=Path, help="Otherwise read PLEASE_TRANSCRIBE_API_KEY or prompt")
@@ -129,6 +134,12 @@ def parser() -> argparse.ArgumentParser:
     focus.add_argument("--work", type=Path, required=True)
     focus.add_argument("--limit", type=int, default=20)
     focus.add_argument("--offset", type=int, default=0)
+    polish = actions.add_parser("polish", help="Prepare uncertain speech for agent correction")
+    polish.add_argument("--work", type=Path, required=True)
+    polish.add_argument("--limit", type=int, default=10)
+    polish.add_argument("--offset", type=int, default=0)
+    polish.add_argument("--command-json", help="Optional existing harness wrapper; JSON argv, no shell")
+    polish.add_argument("--timeout", type=positive, default=600)
     status = actions.add_parser("status", help="Explicit review coverage and pending candidates")
     status.add_argument("--work", type=Path, required=True)
     decision = actions.add_parser("decide", help="Append an accepted/rejected/deferred candidate decision")
@@ -166,6 +177,8 @@ def parser() -> argparse.ArgumentParser:
     export.add_argument("--work", type=Path, required=True)
     export.add_argument("--output", type=Path, required=True)
     export.add_argument("--formats", default="md,html,json,srt,vtt")
+    export.add_argument("--text-version", choices=["original", "polished"], default="original",
+                        help="Polished applies accepted audio-reviewed edits under OUTPUT/polished")
     run = commands.add_parser("run", help="Prepare, transcribe, build, bundle and export")
     run.add_argument("source", help="Local recording or http(s) video URL")
     run.add_argument("--work", type=Path, required=True)
@@ -204,7 +217,10 @@ def execute(args: argparse.Namespace) -> None:
         names = ("backend", "model", "language", "multilingual", "device", "compute_type", "endpoint", "connection", "timeout", "retry_failed")
         transcribe(args.work, **{name: getattr(args, name) for name in names}, import_path=args.import_transcript)
 
-    if args.command == "connect":
+    if args.command == "cloud":
+        from .cloud import mount
+        mount(args.remote, args.mountpoint)
+    elif args.command == "connect":
         import getpass
         import os
         key = (args.api_key_file.read_text().strip() if args.api_key_file else
@@ -240,6 +256,13 @@ def execute(args: argparse.Namespace) -> None:
             print(import_response(args.work, read_json(args.response)))
         elif args.action == "run":
             print(run_command(args.work, json.loads(args.command_json), timeout=args.timeout))
+        elif args.action == "polish":
+            from .polish import prepare_polish
+            result = prepare_polish(args.work, limit=args.limit, offset=args.offset)
+            if args.command_json:
+                result["report"] = str(run_command(args.work, json.loads(args.command_json),
+                    timeout=args.timeout, request_path=result["request"]).relative_to(args.work))
+            print(json.dumps(result, ensure_ascii=False, indent=2))
         else:
             from .triage import focus, status, decide, mark_coverage
             if args.action == "focus":
@@ -268,7 +291,7 @@ def execute(args: argparse.Namespace) -> None:
         from .mcp_server import serve
         serve(args.root)
     elif args.command == "export":
-        for path in export(args.work, args.output, args.formats.split(",")):
+        for path in export(args.work, args.output, args.formats.split(","), text_version=args.text_version):
             print(path)
     elif args.command == "run":
         from .pipeline import run

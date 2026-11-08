@@ -34,6 +34,11 @@ def render_html(data: dict, reviews: list[dict], work: Path) -> str:
               "Visual changes and temporal links are candidates for review.</p>",
               f'<p>Source time origin: {data["manifest"]["source_time_origin"]} seconds. '
               'Displayed times are relative to this origin.</p>']
+    if data.get("text_version") == "polished":
+        chunks.append(f'<p>Polished transcript: {data["polish"]["changed_segments"]} segments corrected; '
+                      f'{data["polish"]["unresolved_candidates"]} unresolved review candidates. '
+                      'Only accepted audio-reviewed corrections are applied. '
+                      'Corrected words have not been realigned; original ASR is preserved separately.</p>')
     link_map = {link["segment_id"]: link for link in data["links"]}
     for _, _, kind, item in document_items(data):
         if kind == "segment":
@@ -97,6 +102,11 @@ def render_md(data: dict, reviews: list[dict], work: Path, output: Path) -> str:
               "Visual changes and temporal links are candidates for review.",
               f'Source time origin: {data["manifest"]["source_time_origin"]} seconds. '
               'Displayed times are relative to this origin.']
+    if data.get("text_version") == "polished":
+        chunks.append(f'Polished transcript: {data["polish"]["changed_segments"]} segments corrected; '
+                      f'{data["polish"]["unresolved_candidates"]} unresolved review candidates. '
+                      'Only accepted audio-reviewed corrections are applied. '
+                      'Corrected words have not been realigned; original ASR is preserved separately.')
     for _, _, kind, item in document_items(data):
         if kind == "segment":
             chunks += [f'## {timestamp(item["start"])}–{timestamp(item["end"])} · {item["id"]}', md_text(item["text"])]
@@ -151,7 +161,16 @@ def render_subtitles(data: dict, *, vtt: bool = False) -> str:
     return "\n".join(chunks)
 
 
-def export(work: Path, output: Path, formats: list[str]) -> list[Path]:
+def export(work: Path, output: Path, formats: list[str], *, text_version: str = "original") -> list[Path]:
+    from contextlib import nullcontext
+    from .pipeline import session_lock
+    with session_lock(work) if text_version == "polished" else nullcontext():
+        return _export(work, output, formats, text_version=text_version)
+
+
+def _export(work: Path, output: Path, formats: list[str], *, text_version: str) -> list[Path]:
+    if text_version not in ("original", "polished"):
+        raise ValueError("Choose original or polished text")
     unknown = set(formats) - FORMATS
     if unknown:
         raise ValueError(f"Unknown output formats: {', '.join(sorted(unknown))}")
@@ -165,6 +184,10 @@ def export(work: Path, output: Path, formats: list[str]) -> list[Path]:
     if (work / "coverage").exists() or (work / "decisions").exists():
         data["review_status"] = status(work)
     reviews = load_reviews(work, data["snapshot"])
+    if text_version == "polished":
+        from .polish import apply_polish
+        data = apply_polish(work, data)
+        output = output / "polished"
     output.mkdir(parents=True, exist_ok=True)
     paths = []
     document = render_html(data, reviews, work) if {"html", "pdf"} & set(formats) else None

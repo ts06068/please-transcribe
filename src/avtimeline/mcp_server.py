@@ -23,6 +23,23 @@ def create_server(root: Path):
         return path
 
     @server.tool()
+    def prepare_polish(session_name: str, offset: int = 0, limit: int = 10) -> dict:
+        """Prepare paginated uncertain-speech packets for this agent to correct.
+
+        Read the written instructions and evidence; submit a normal review report
+        and accept only corrections actually verified against audio.
+        """
+        return api.prepare_polish(session(session_name), offset=offset, limit=limit)
+
+    @server.tool()
+    def export_polished(session_name: str, formats: list[str] | None = None) -> dict:
+        """Export accepted audio-reviewed edits under the session's exports/polished.
+
+        Original ASR and exports are retained. Corrected words are not realigned.
+        """
+        return api.export_polished(session(session_name), formats)
+
+    @server.tool()
     def get_context(session_name: str, start: float, end: float, context: float = 3,
                     max_frames: int = 12, max_segments: int = 100, offset: int = 0) -> dict:
         """Read speech, visual events, and screen references for a bounded time range.

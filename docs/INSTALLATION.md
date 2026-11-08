@@ -44,7 +44,8 @@ not a plugin or a vendor-specific configuration file.
 > CPU inference; do not configure a remote server or change another model service.
 > Verify the CLI and run `please-transcribe doctor --backend faster-whisper`.
 > If the requested output includes PDF, install the PDF extra, Chromium, and
-> fonts for my languages. Add URL or MCP extras only when needed. Report the
+> fonts for my languages. For YouTube links, install the URL extra plus Node.js
+> 22+ or Deno 2.3+, and verify doctor --url. Add MCP when needed. Report the
 > environment path, activation/executable commands for this OS, checks performed,
 > and any missing dependencies. Do not claim an ASR run succeeded without a real
 > input recording. If a step cannot run, give the exact reason and remaining step.

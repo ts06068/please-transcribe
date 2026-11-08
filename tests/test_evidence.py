@@ -144,7 +144,8 @@ class EvidenceTests(unittest.TestCase):
                     tools = await client.list_tools()
                     names = {tool.name for tool in tools.tools}
                     self.assertTrue({"get_context", "get_screen_image", "get_audio_excerpt", "extract_dense_frames",
-                                     "submit_review", "get_review_status", "decide_candidate"} <= names)
+                                     "submit_review", "get_review_status", "decide_candidate",
+                                     "prepare_polish", "export_polished"} <= names)
                     result = await client.call_tool("get_context", {"session_name": self.work.name, "start": 59, "end": 64})
                     self.assertFalse(result.isError)
                     self.assertIn("Aquí", str(result.content))
@@ -166,6 +167,16 @@ class EvidenceTests(unittest.TestCase):
                     decision = await client.call_tool("decide_candidate", {"session_name": self.work.name,
                         "candidate_id": proposal["id"], "decision": "deferred", "actor": "SDK test", "reason": "Audio not inspected"})
                     self.assertFalse(decision.isError)
+                    polish = await client.call_tool("prepare_polish", {"session_name": self.work.name, "limit": 1})
+                    self.assertFalse(polish.isError)
+                    accepted = await client.call_tool("decide_candidate", {"session_name": self.work.name,
+                        "candidate_id": proposal["id"], "decision": "accepted", "actor": "SDK fixture test",
+                        "reason": "Synthetic test attestation", "audio_inspected": True})
+                    self.assertFalse(accepted.isError)
+                    polished = await client.call_tool("export_polished", {"session_name": self.work.name, "formats": ["json"]})
+                    self.assertFalse(polished.isError)
+                    self.assertEqual("polished", read_json(self.work / "exports/polished/transcript.json")["text_version"])
+                    self.assertEqual(" Hello, hello!", read_json(self.work / "exports/polished/transcript.json")["transcript"]["segments"][0]["text"])
                     outside = await client.call_tool("get_context", {"session_name": "../../outside", "start": 0, "end": 1})
                     self.assertTrue(outside.isError)
 

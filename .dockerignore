@@ -2,6 +2,8 @@
 .env
 client.json
 api-keys.json
+rclone.conf
+.rclone
 *.credentials.json
 .please-transcribe
 .venv

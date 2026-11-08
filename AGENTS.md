@@ -36,6 +36,10 @@ OCR additionally needs Tesseract and the requested language packs.
 When operating in a development container, resolve paths inside that container.
 A host filesystem path is not automatically mounted there.
 Use a shared or copied workspace. A Linux container cannot run the MLX backend.
+Recordings may be on an existing Google Drive/OneDrive mount; read the mounted
+path directly and use a writable session directory. Do not copy the entire source
+video into the workspace unnecessarily. See docs/CLOUD_STORAGE.md for the read-only
+`cloud mount` helper, rclone authentication, drivers, and container mount visibility.
 Do not restart, stop, or reconfigure another user's serving process as a side
 effect of processing a recording.
 
@@ -80,6 +84,11 @@ interruption. Progress is on stderr (`--progress json` for machine events). Use 
 new session for changed inputs/ASR options. `batch` processes local paths and URLs
 independently and records failures without abandoning successful items. URL intake
 requires the url extra. See docs/WORKFLOWS.md for exact arguments.
+YouTube watch, short, or Shorts links can be passed directly to `run`/`batch`.
+Check `doctor --url`: YouTube also needs Node.js 22+ or Deno 2.3+ and the EJS
+scripts included in the URL extra. Both Docker images include these dependencies.
+Do not substitute YouTube captions for audio ASR or claim a blocked video was
+downloaded. Read video bytes through the normal intake and resume workflow.
 
 ## Review the evidence yourself when requested
 
@@ -107,6 +116,17 @@ implementing the documented stdin/stdout protocol; do not invent one vendor's CL
 flags or read/copy account credentials into containers.
 
 Use `review focus` for uncertainty candidates with audio and screen evidence.
+When asked to polish uncertain speech, call `review polish` / MCP `prepare_polish`,
+follow `review/polish/instructions.md`, inspect the referenced evidence, submit
+proposals, and record decisions. Continue through the requested candidate pages;
+preparing packets alone is not a completed polish. Accept only audio-supported
+speech corrections. If the harness cannot inspect audio, defer those proposals
+and report the limitation; never manufacture an audio-inspection attestation.
+Export the accepted edits with `export --text-version polished` or MCP
+`export_polished`. This writes a separate `exports/polished/` view, retaining the
+baseline and default exports. Conflicting accepted edits must be resolved first.
+For corrected segments, word timing/scores describe only the original ASR and
+must not be presented as newly aligned edited words. See docs/POLISH.md.
 `inspect context`, `inspect audio`, and `inspect frames` investigate bounded
 intervals. Dense frames receive citable IDs without changing baseline observations.
 Use `review coverage` only for segments actually inspected and distinguish audio
@@ -132,8 +152,11 @@ themes, or generated illustrations. Keep Markdown's companion `frames/` folder.
 
 Check that requested files exist and are nonempty. Check that exported JSON
 retains the original segment IDs, texts, word data, and ordering from
-`transcript.raw.json`; do not count review suggestions as replacements. Verify that
-referenced image assets exist. Inspect available audit findings and imported review
+`transcript.raw.json`; do not count review suggestions as replacements.
+For an explicitly requested polished view, check that only accepted audio-reviewed
+edits were applied, segment IDs/times/order stayed intact, and `original_transcript`
+retains original text/words. Verify unresolved-candidate counts and report them.
+Verify that referenced image assets exist. Inspect available audit findings and imported review
 reports. Successful serialization does not prove ASR accuracy or completeness.
 
 Finish with clickable output paths, languages/backend/model used, review coverage,

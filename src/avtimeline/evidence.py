@@ -99,7 +99,9 @@ def source_path(work: Path, data: dict, override: Path | None = None) -> Path:
         path = Path(read_json(work / "pipeline.json")["source_path"])
     else:
         raise ValueError("Original video path is unavailable; provide --source")
-    if not path.is_file() or file_hash(path) != data["manifest"]["source"]["sha256"]:
+    if not path.is_file():
+        raise ValueError("Original video is unavailable; reconnect its cloud mount or provide --source")
+    if file_hash(path) != data["manifest"]["source"]["sha256"]:
         raise ValueError("Original video does not match this session's source hash")
     return path
 
