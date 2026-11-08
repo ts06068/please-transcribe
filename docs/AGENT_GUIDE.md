@@ -86,6 +86,11 @@ implicitly expanded. The batch result keeps per-item success and failure states.
 
 ### Install dependencies or connect a server
 
+For complete installation prompts covering local use, an existing endpoint, and
+administrator-authorized server setup, see
+[Install with an agent](INSTALLATION.md#install-with-an-agent). They apply to
+Codex, Claude Code, and other agents with file and terminal access.
+
 > Read README.md, AGENTS.md, and docs/INSTALLATION.md. Install the client dependencies
 > in a project virtual environment, connect to the transcription endpoint I provide,
 > and verify it with doctor. Process `/workspace/videos/demo.mp4`. Report blocked

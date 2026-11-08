@@ -5,12 +5,17 @@
 Turn presentations, screencasts, demos, and lectures into original-language
 transcripts linked to timestamped screen images. Review uncertain speech with
 your preferred agent, and export Markdown, plain HTML, PDF, JSON, SRT, or WebVTT.
+Run the client and local CPU pipeline on **Linux, Windows, or macOS**. Choose
+local inference, a Docker environment, or a configured remote transcription server.
 
 [Read the demo](examples/demo/index.md) · [Download HTML](examples/demo/index.html) ·
 [PDF](examples/demo/index.pdf) · [Review queue](examples/demo/review.html) ·
 [Demo source and provenance](examples/demo/README.md)
 
-![A Python traceback captured from the demo recording](examples/demo/frames/f000000.jpg)
+![Successful Python execution producing 42, extracted from the demo recording](examples/demo/frames/f000004.jpg)
+
+An actual screen image from the demo: the example program defines `result` and
+prints `42`. The demo follows a code change from an error to successful execution.
 
 - **Beyond slides:** capture screen changes in code demos, browser walkthroughs,
   slides, and other recordings, plus periodic images for context.
@@ -30,6 +35,9 @@ understanding. ASR can omit or misrecognize speech. Review helps investigate the
 errors; it does not guarantee a complete or accurate transcript.
 
 ## Quick start: local transcription
+
+Prefer to let an agent install it? Copy a setup request from
+[install with Codex, Claude Code, or another agent](docs/INSTALLATION.md#install-with-an-agent).
 
 Requirements: Python 3.10+ and `ffmpeg`/`ffprobe` on `PATH`. Install FFmpeg through
 your operating system's package manager or [FFmpeg](https://ffmpeg.org/download.html).
@@ -85,28 +93,26 @@ to the configured server; screen extraction and exports stay on the client.
 If that server is unavailable, the client reports the error and retains its job
 receipt. It does not silently load a local model.
 
-## Set up a shared Mac server
+## Choose a deployment
 
-An administrator can provision a Mac over SSH from a client, including a Linux
-development container:
+| Mode | Where it runs | Setup |
+| --- | --- | --- |
+| Local CPU | Linux, Windows, macOS | Install the media and CPU extras; run faster-whisper locally. |
+| Docker CPU | A host with a compatible Docker runtime | Use the provided Dockerfile and Compose configuration. |
+| Remote client | Linux, Windows, macOS, development containers | Connect to an existing ASR endpoint; no local ASR weights are needed. |
+| Optional MLX acceleration | Apple Silicon macOS | Use the MLX adapter; this is one optional backend. |
 
-```sh
-please-transcribe server install --ssh admin@mac-server \
-  --client-name alice --bind-address PRIVATE_SERVER_IP \
-  --endpoint http://PRIVATE_SERVER_IP:8765
-```
+The client, evidence timeline, review protocol, and output formats are independent
+of the inference host. GPU engines need their own compatible hardware and runtime.
+The bundled `server install` provisioning adapter currently targets macOS; this
+limitation applies to that installer, not to the project as a whole. On other
+platforms, use the local/Docker CPU pipeline or connect to an existing endpoint.
 
-Replace the example values. The Mac needs an active login for that user, Docker
-Desktop, and `uv`. The installer configures two Docker containers, a dedicated
-native MLX worker, and a private connection profile. Standard Linux containers
-on macOS do not expose Metal; the model runs natively and the Docker controller
-controls its lifecycle. Stopping the controller releases the model.
-
-Additional clients connect using their own credentials; ordinary client package
-installation never provisions a server. Use a trusted private connection or HTTPS
-for credentials and audio. Network routes, TLS, and Cloudflare policies are
-administrator-managed. See the [installation guide](docs/INSTALLATION.md) for
-local installation, Docker networks, per-user keys, model downloads, and start/stop.
+For administrators, the [installation guide](docs/INSTALLATION.md) explains the
+supported server provisioning path, per-user keys, Docker control, and lifecycle.
+Additional clients only install the client and connect. Use a trusted private
+connection or HTTPS for audio and credentials; routing and TLS are managed by
+the administrator.
 
 ## Use through an agent
 

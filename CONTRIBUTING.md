@@ -22,6 +22,9 @@ MLX is optional and requires an Apple Silicon macOS host.
 
 Keep changes focused and describe the resulting behavior, how you checked it,
 and any limitations. Update relevant CLI examples when changing public arguments.
+Use Conventional Commits for commit subjects, such as `feat: add an exporter`,
+`fix(client): resume polling`, or `docs: clarify installation`. Use an imperative
+description and an optional scope that names the affected component.
 Use small synthetic media fixtures; tests should not require private recordings,
 API credentials, model downloads, or a running personal server.
 

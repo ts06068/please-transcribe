@@ -1,4 +1,4 @@
-# Client and Mac server installation
+# Installation
 
 `please-transcribe` and `avtimeline` run the same CLI. Client installation and server
 provisioning are separate explicit operations. Install the client on Linux,
@@ -6,10 +6,89 @@ Windows, or macOS. The native-worker server installer currently targets macOS;
 the default MLX backend requires Apple Silicon. It does not modify existing LLM
 servers or Cloudflare settings.
 
+## Choose an installation mode
+
+| Mode | Platforms | Install |
+| --- | --- | --- |
+| Local transcription | Linux, Windows, macOS | Media + CPU extras and FFmpeg/ffprobe. |
+| Docker CPU pipeline | Hosts with a compatible Docker runtime | The provided Compose configuration. |
+| Client for an existing endpoint | Linux, Windows, macOS, development containers | Media extra and FFmpeg/ffprobe; a private server connection. |
+| Optional accelerated engine | Hardware and runtime dependent | MLX on Apple Silicon; faster-whisper CUDA needs a compatible NVIDIA runtime. |
+| Automated shared-server provisioning | Currently macOS | SSH/local installer, Docker API/controller, and a native worker. |
+
+Local transcription and remote client use do not require a Mac. The current
+automated server installer uses macOS LaunchAgents; it is not a generic Linux or
+Windows server installer. Do not run it on an unsupported host. Local CPU/Docker
+processing and client-side exports remain independent of that server adapter.
+
+## Install with an agent
+
+Codex, Claude Code, or another agent with terminal and file access can install and
+verify the project for you. Open the cloned repository as the agent's workspace,
+then paste one of the requests below. If the repository has not been cloned, give
+the agent `https://github.com/ts06068/please-transcribe` and an installation directory.
+Use your harness's existing authentication; no account tokens need to be copied
+into this project or its containers. These prompts are vendor-neutral instructions,
+not a plugin or a vendor-specific configuration file.
+
+### Local installation on Linux, Windows, or macOS
+
+> Install please-transcribe from https://github.com/ts06068/please-transcribe in
+> `<INSTALL_DIRECTORY>`. Read README.md, AGENTS.md, and docs/INSTALLATION.md first.
+> Detect the operating system, architecture, Python version, and available tools.
+> Use a project virtual environment and install the media and CPU extras plus
+> FFmpeg/ffprobe through an appropriate package manager. Use local faster-whisper
+> CPU inference; do not configure a remote server or change another model service.
+> Verify the CLI and run `please-transcribe doctor --backend faster-whisper`.
+> If the requested output includes PDF, install the PDF extra, Chromium, and
+> fonts for my languages. Add URL or MCP extras only when needed. Report the
+> environment path, activation/executable commands for this OS, checks performed,
+> and any missing dependencies. Do not claim an ASR run succeeded without a real
+> input recording. If a step cannot run, give the exact reason and remaining step.
+
+Replace `<INSTALL_DIRECTORY>`. If you also want a test recording processed, provide
+its accessible path, spoken languages, output formats, and a new session directory.
+The CLI's default local model is large-v3; first transcription downloads weights.
+The agent should not download or run an unrelated model just to check installation.
+
+### Client installation for a shared server
+
+> Install the please-transcribe client in `<INSTALL_DIRECTORY>`. Follow AGENTS.md
+> and docs/INSTALLATION.md. Use a virtual environment with the media extra and
+> FFmpeg/ffprobe. Connect to `<ASR_ENDPOINT>` using the private API-key file I supply
+> outside the repository, or guide me through the hidden key prompt. Do not put
+> the key in command arguments, output, Git, or documentation. Verify authentication
+> and model readiness with doctor. Do not install local ASR weights, provision or
+> restart the server, or silently fall back to local inference. Report the private
+> profile location, diagnostics, and the command to process a recording.
+
+For a development container, installation and input paths must exist inside that
+container. Container `localhost` is not the server. Use a reachable endpoint and
+the appropriate network. The client requires no server SSH credentials.
+
+### Administrator-requested server provisioning
+
+> Configure a shared please-transcribe server using the supported installer. Read
+> the server sections of docs/INSTALLATION.md and check the target platform and
+> prerequisites before making changes. Use SSH target `<ADMIN@ASR_HOST>`, client
+> identity `<CLIENT_NAME>`, reachable endpoint `<ASR_ENDPOINT>`, and the bind address
+> and existing Docker network I supply. Keep SSH authentication in my SSH agent,
+> key, or interactive prompt; verify the host key and never save passwords. Run
+> the server installation and wait for model readiness, then verify the client's
+> private connection with doctor. Preserve unrelated services and existing keys.
+> Report the containers, worker backend, configuration locations, readiness, and
+> start/stop commands. Do not claim a generic server installer exists for an
+> unsupported platform or change network routes/TLS policies without instructions.
+
+This last request authorizes server setup separately from client installation.
+Supply all placeholder values through your own environment; never commit real
+credentials into example prompts. See [the agent guide](AGENT_GUIDE.md) for
+natural-language requests to process recordings after installation.
+
 ## Existing server: install the client only
 
 Copy/clone the project into the execution environment. In a development container,
-use a persistent workspace such as `/workspace/please-transcribe`. Mac host paths
+use a persistent workspace such as `/workspace/please-transcribe`. Host paths
 are not automatically accessible in the container.
 
 ```sh
@@ -71,7 +150,7 @@ docker run --rm \
 Use an endpoint reachable from the client container; `localhost` refers to that
 container. Attach the appropriate Docker network when using a server service alias.
 
-## First-time server setup over SSH
+## First-time server setup over SSH (current macOS adapter)
 
 Prerequisites on the Mac: an authorized macOS SSH account, an active desktop login
 for that same user, running Docker Desktop, and `uv` on PATH or in `~/.local/bin`.
