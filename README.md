@@ -15,9 +15,10 @@ Transcribe videos in their original language and match the speech with screensho
 [Read the transcript](examples/demo/index.md) · [HTML](examples/demo/index.html) ·
 [PDF](examples/demo/index.pdf) · [Review uncertain speech](examples/demo/review.html)
 
-![Demo recording showing a Python program printing 42](examples/demo/frames/f000004.jpg)
+[![Input video beside the generated HTML, showing a matching screenshot, speech, and timestamps](docs/images/readme-preview.png)](examples/demo/index.md)
 
-A frame from the [demo recording](examples/demo/README.md), which uses synthesized narration.
+Left: the input video. Right: the actual HTML output with speech, timestamps,
+and a matching screenshot. The [demo recording](examples/demo/README.md) uses synthesized narration.
 
 ## Key features
 
