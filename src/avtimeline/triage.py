@@ -70,8 +70,11 @@ def candidates(work: Path) -> dict:
 
 
 def decisions(work: Path, snapshot: str) -> list[dict]:
-    return [item for path in sorted((work / "decisions").glob("*.json"))
-            if (item := read_json(path))["snapshot"] == snapshot]
+    records = [item for path in (work / "decisions").glob("*.json")
+               if (item := read_json(path))["snapshot"] == snapshot]
+    # Older records have no sequence; retain their timestamp order. New records
+    # follow append order even when wall-clock timestamps tie or move backward.
+    return sorted(records, key=lambda d: (d.get("sequence", 0), d["created"], d["id"]))
 
 
 def decide(work: Path, candidate_id: str, decision: str, actor: str, reason: str,
@@ -80,16 +83,20 @@ def decide(work: Path, candidate_id: str, decision: str, actor: str, reason: str
         raise ValueError("Audio inspection must be an explicit boolean attestation")
     if decision not in ("accepted", "rejected", "deferred") or not actor.strip() or not reason.strip():
         raise ValueError("Choose accepted/rejected/deferred and provide actor and reason")
-    queue = candidates(work)
-    candidate = next((c for c in queue["candidates"] if c["id"] == candidate_id), None)
-    if candidate is None:
-        raise ValueError("Candidate does not exist in the current snapshot")
-    if decision == "accepted" and candidate["kind"] == "correction_proposal" and not audio_inspected:
-        raise ValueError("Accepting a speech correction requires audio inspection; otherwise defer it")
-    item = {"id": uuid.uuid4().hex, "snapshot": queue["snapshot"], "candidate_id": candidate_id,
-            "proposal_id": candidate.get("proposal_id"), "decision": decision, "actor": actor,
-            "reason": reason, "audio_inspected": audio_inspected, "created": time.time()}
-    write_json(work / "decisions" / (item["id"] + ".json"), item, exclusive=True)
+    from .pipeline import session_lock
+    with session_lock(work):
+        queue = candidates(work)
+        candidate = next((c for c in queue["candidates"] if c["id"] == candidate_id), None)
+        if candidate is None:
+            raise ValueError("Candidate does not exist in the current snapshot")
+        if decision == "accepted" and candidate["kind"] == "correction_proposal" and not audio_inspected:
+            raise ValueError("Accepting a speech correction requires audio inspection; otherwise defer it")
+        sequence = max((d.get("sequence", 0) for d in decisions(work, queue["snapshot"])), default=0) + 1
+        item = {"id": uuid.uuid4().hex, "snapshot": queue["snapshot"], "candidate_id": candidate_id,
+                "proposal_id": candidate.get("proposal_id"), "decision": decision, "actor": actor,
+                "reason": reason, "audio_inspected": audio_inspected, "created": time.time(),
+                "sequence": sequence}
+        write_json(work / "decisions" / (item["id"] + ".json"), item, exclusive=True)
     return item
 
 
@@ -121,7 +128,7 @@ def status(work: Path) -> dict:
             image_reviewed.update(record["segment_ids"])
     queue = candidates(work)
     latest = {}
-    for item in sorted(decisions(work, data["snapshot"]), key=lambda d: d["created"]):
+    for item in decisions(work, data["snapshot"]):
         latest[item["candidate_id"]] = item
     return {"snapshot": data["snapshot"], "segments_total": len(all_ids), "reviewed": len(reviewed),
             "audio_reviewed": len(audio_reviewed), "images_reviewed": len(image_reviewed),

@@ -6,6 +6,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import uuid
 import wave
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -104,12 +106,27 @@ class EvidenceTests(unittest.TestCase):
         original = (self.work / "transcript.raw.json").read_bytes()
         import_response(self.work, response(self.data))
         candidate = next(c for c in candidates(self.work)["candidates"] if c["kind"] == "correction_proposal")
-        decide(self.work, candidate["id"], "rejected", "first reviewer", "Initial reading")
-        decide(self.work, candidate["id"], "accepted", "second reviewer", "Fixture audio checked", audio_inspected=True)
-        export(self.work, self.work / "exports", ["html", "json"])
+        # Windows can give two writes the same wall-clock timestamp. UUID file
+        # order must not make the earlier rejection replace the later acceptance.
+        with patch("avtimeline.triage.time.time", return_value=1000), \
+                patch("avtimeline.triage.uuid.uuid4", side_effect=[uuid.UUID(int=2), uuid.UUID(int=1)]):
+            decide(self.work, candidate["id"], "rejected", "first reviewer", "Initial reading")
+            decide(self.work, candidate["id"], "accepted", "second reviewer", "Fixture audio checked", audio_inspected=True)
+        export(self.work, self.work / "exports", ["html", "md", "json"])
         output = read_json(self.work / "exports/transcript.json")
         self.assertEqual(2, len(output["decisions"]))
         self.assertIn("Decision: accepted", (self.work / "exports/index.html").read_text(encoding="utf-8"))
+        self.assertIn("Decision: accepted", (self.work / "exports/index.md").read_text(encoding="utf-8"))
+        self.assertEqual(["rejected", "accepted"], [d["decision"] for d in output["decisions"]])
+        self.assertEqual("accepted", status(self.work)["decisions"][0]["decision"])
+        # A clock adjustment must not undo a subsequent decision either.
+        with patch("avtimeline.triage.time.time", return_value=999):
+            decide(self.work, candidate["id"], "deferred", "third reviewer", "Recheck requested")
+        export(self.work, self.work / "exports", ["html", "md", "json"])
+        self.assertEqual("deferred", status(self.work)["decisions"][0]["decision"])
+        for name in ("index.html", "index.md"):
+            self.assertIn("Decision: deferred", (self.work / "exports" / name).read_text(encoding="utf-8"))
+        self.assertEqual(3, len(read_json(self.work / "exports/transcript.json")["decisions"]))
         self.assertEqual(original, (self.work / "transcript.raw.json").read_bytes())
 
     @unittest.skipUnless(importlib.util.find_spec("mcp"), "Optional MCP SDK")

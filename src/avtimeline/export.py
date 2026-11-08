@@ -69,7 +69,7 @@ def render_html(data: dict, reviews: list[dict], work: Path) -> str:
         for index, correction in enumerate(review["corrections"]):
             pid = "p" + fingerprint({"report": fingerprint(review), "index": index})[:20]
             history = [d for d in data.get("decisions", []) if d.get("proposal_id") == pid]
-            decision = sorted(history, key=lambda d: d["created"])[-1] if history else None
+            decision = history[-1] if history else None  # Canonical append order.
             chunks.append(f'<p><a href="#{esc(correction["segment_id"])}">{esc(correction["segment_id"])}</a>: '
                           f'{esc(correction["original_text"])} → {esc(correction["proposed_text"])}<br>'
                           f'Reason: {esc(correction["reason"])}</p>')
@@ -126,7 +126,7 @@ def render_md(data: dict, reviews: list[dict], work: Path, output: Path) -> str:
             pid = "p" + fingerprint({"report": fingerprint(review), "index": index})[:20]
             history = [d for d in data.get("decisions", []) if d.get("proposal_id") == pid]
             if history:
-                decision = sorted(history, key=lambda d: d["created"])[-1]
+                decision = history[-1]
                 chunks.append(f'Decision: {decision["decision"]} by {md_text(decision["actor"])} · {md_text(decision["reason"])}')
         for annotation in review["event_annotations"]:
             chunks.append(f'{annotation["event_id"]}: {md_text(annotation["description"])} '
