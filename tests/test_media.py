@@ -58,7 +58,7 @@ class MediaTests(unittest.TestCase):
             self.assertLess(abs(samples[:6000]).max(), 10)
             self.assertGreater(abs(samples[9000:]).max(), 1000)
             export(work, work / "exports", ["md", "html", "json"])
-            self.assertIn(result["frames"][0]["id"], (work / "exports/index.html").read_text())
+            self.assertIn(result["frames"][0]["id"], (work / "exports/index.html").read_text(encoding="utf-8"))
             exported = read_json(work / "exports/transcript.json")
             self.assertEqual(len(result["frames"]), len(exported["inspection"]))
             self.assertTrue((work / "exports" / result["frames"][0]["image"]).is_file())

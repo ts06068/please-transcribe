@@ -75,7 +75,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue({"possible_missing_speech", "low_asr_score", "low_word_score", "correction_proposal"}
                         <= {c["kind"] for c in queue["candidates"]})
         page = focus(self.work, limit=2)
-        html = (self.work / page["html"]).read_text()
+        html = (self.work / page["html"]).read_text(encoding="utf-8")
         self.assertIn('<audio controls', html)
         self.assertNotIn('<style', html)
         self.assertNotIn('<script', html)
@@ -94,7 +94,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(0, report["audio_reviewed"])
         self.assertIn("s000001", report["unreviewed_segment_ids"])
         export(self.work, self.work / "exports", ["html", "json"])
-        document = (self.work / "exports/index.html").read_text()
+        document = (self.work / "exports/index.html").read_text(encoding="utf-8")
         self.assertIn("Decision: deferred", document)
         self.assertIn("1 / 4 speech segments", document)
         self.assertEqual(" Hello, hello.", read_json(self.work / "exports/transcript.json")["transcript"]["segments"][0]["text"])
@@ -109,7 +109,7 @@ class EvidenceTests(unittest.TestCase):
         export(self.work, self.work / "exports", ["html", "json"])
         output = read_json(self.work / "exports/transcript.json")
         self.assertEqual(2, len(output["decisions"]))
-        self.assertIn("Decision: accepted", (self.work / "exports/index.html").read_text())
+        self.assertIn("Decision: accepted", (self.work / "exports/index.html").read_text(encoding="utf-8"))
         self.assertEqual(original, (self.work / "transcript.raw.json").read_bytes())
 
     @unittest.skipUnless(importlib.util.find_spec("mcp"), "Optional MCP SDK")
