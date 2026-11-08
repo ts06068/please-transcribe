@@ -7,7 +7,7 @@ Transcribe videos in their original language and match the speech with screensho
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 [Demo](#demo) · [Features](#key-features) · [Installation](#how-to-use) ·
-[Models](#transcription-specification) · [Documentation](#documentation-and-development) ·
+[MCP](#use-with-mcp) · [Models](#transcription-specification) · [Documentation](#documentation-and-development) ·
 [License](#license)
 
 ## Demo
@@ -26,7 +26,7 @@ A frame from the [demo recording](examples/demo/README.md), which uses synthesiz
 - Link speech to screenshots taken around screen changes.
 - Export Markdown, plain HTML, PDF, JSON, SRT, and WebVTT.
 - Resume interrupted work or process several videos at once.
-- Review with Codex, Claude Code, or another agent; keep suggestions separate from the original transcript.
+- Review through MCP or your agent's terminal; keep suggestions separate from the original transcript.
 - Run locally on Linux, Windows, or macOS, in Docker, or through a shared server.
 
 Speech recognition can miss or mishear words. Review important passages before relying on them.
@@ -65,6 +65,32 @@ Open the repository in Codex, Claude Code, or another agent with terminal access
 > use in a virtual environment, install the required media tools, and run doctor.
 
 See [installation prompts](docs/INSTALLATION.md#install-with-an-agent) for shared servers and other setups.
+
+## Use with MCP
+
+After the installation above, add the MCP extra:
+
+```sh
+python -m pip install -e '.[mcp]'
+```
+
+Register this stdio server in your MCP client's settings, using absolute paths:
+
+```json
+{
+  "command": "/path/to/please-transcribe/.venv/bin/please-transcribe",
+  "args": ["mcp", "--root", "/path/to/please-transcribe/work"]
+}
+```
+
+On Windows, use `.venv\Scripts\please-transcribe.exe` as the executable path.
+The surrounding settings format depends on your client.
+
+Create a session with `run` first, or ask your agent to do it. MCP tools let the
+agent read the transcript, inspect screenshots, request audio clips, and save
+review notes. They work on existing sessions; transcription and export use the CLI.
+Ask: “Review seconds 60–75 of session `session` and flag unclear speech.”
+See [MCP tools and setup](docs/WORKFLOWS.md#python-and-mcp) for details.
 
 ## Transcription specification
 
