@@ -3,9 +3,11 @@ from __future__ import annotations
 import io
 import contextlib
 import json
+import http.client
 import os
 from pathlib import Path
 import signal
+import select
 import subprocess
 import sys
 import tempfile
@@ -184,6 +186,35 @@ class ServiceTests(unittest.TestCase):
         upload(self.connection, self.audio, "en", False)
         with self.assertRaisesRegex(ValueError, "429"):
             upload(self.connection, self.audio, "en", False)
+
+    def test_rejected_uploads_finish_reading_body_before_closing_connection(self):
+        # A rejected POST can arrive while the client is still sending audio.
+        # Closing with unread bytes can reset the socket on Windows, hiding the
+        # JSON error behind WinError 10053. Exercise split uploads over real TCP.
+        upload(self.connection, self.audio, "en", False)
+        upload(self.connection, self.audio, "en", False)
+        payload = self.audio.read_bytes()
+        cases = [(401, "invalid", "en", "ready"),
+                 (422, "a-secret", "invalid-language", "ready"),
+                 (429, "a-secret", "en", "ready"),
+                 (503, "a-secret", "en", "stopped")]
+        for status, key, language, model_state in cases:
+            with self.subTest(status=status):
+                write_json(self.root / "control/status.json",
+                           {"state": model_state, "updated": time.time()})
+                with contextlib.closing(http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=3)) as client:
+                    client.putrequest("POST", "/v1/jobs?language=" + language)
+                    client.putheader("Authorization", "Bearer " + key)
+                    client.putheader("Content-Length", str(len(payload)))
+                    client.endheaders()
+                    client.send(payload[:1])
+                    readable, _, _ = select.select([client.sock], [], [], 0.1)
+                    self.assertFalse(readable, "Do not close a rejected upload before reading its body")
+                    client.send(payload[1:])
+                    reply = client.getresponse()
+                    self.assertEqual(status, reply.status)
+                    self.assertIn("error", json.loads(reply.read()))
+        self.assertEqual(2, len(list((self.root / "queue/jobs").iterdir())))
 
     def test_model_and_multilingual_mismatch_rejected_before_upload(self):
         profile = self.root / "connection.json"

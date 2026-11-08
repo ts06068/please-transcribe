@@ -50,7 +50,22 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass  # Do not log tokens, uploaded speech, or response bodies.
 
+    def read_upload(self, size: int) -> bytes:
+        block = self.rfile.read(size)
+        self._upload_remaining -= len(block)
+        return block
+
     def reply(self, status: int, data: dict) -> None:
+        # Closing a socket with unread POST bytes can reset the connection on
+        # Windows, losing the JSON error while the client is still uploading.
+        # Consume the rest of an in-limit, length-delimited body before closing.
+        # Invalid/oversized lengths and chunked bodies are never drained here.
+        while getattr(self, "_upload_remaining", 0) > 0:
+            try:
+                if not self.read_upload(min(self._upload_remaining, 1024 * 1024)):
+                    break
+            except OSError:
+                break
         body = json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -118,6 +133,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.connection.settimeout(300)
+        try:
+            size = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            size = 0
+        self._upload_remaining = (size if 0 < size <= self.server.config["max_upload_bytes"]
+                                  and not self.headers.get("Transfer-Encoding") else 0)
         principal = self.principal()
         if principal is None:
             return
@@ -137,10 +158,6 @@ class Handler(BaseHTTPRequestHandler):
         if model_status(self.server.control)["state"] not in ("starting", "ready", "busy"):
             self.reply(503, {"error": "Model is stopped; ask the server administrator to start it"})
             return
-        try:
-            size = int(self.headers.get("Content-Length", "0"))
-        except ValueError:
-            size = 0
         if size <= 0 or size > self.server.config["max_upload_bytes"] or self.headers.get("Transfer-Encoding"):
             self.reply(413, {"error": "Upload needs a valid Content-Length within the server limit"})
             return
@@ -169,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
                     # Drain a retransmission, retaining the existing model job.
                     remaining = size
                     while remaining:
-                        block = self.rfile.read(min(remaining, 1024 * 1024))
+                        block = self.read_upload(min(remaining, 1024 * 1024))
                         if not block:
                             self.reply(422, {"error": "Incomplete retry upload"})
                             return
@@ -195,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
             with (directory / "audio.wav").open("wb") as handle:
                 remaining = size
                 while remaining:
-                    block = self.rfile.read(min(remaining, 1024 * 1024))
+                    block = self.read_upload(min(remaining, 1024 * 1024))
                     if not block:
                         raise ValueError("Incomplete upload")
                     handle.write(block)
