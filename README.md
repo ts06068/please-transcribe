@@ -53,7 +53,8 @@ please-transcribe doctor --backend faster-whisper
 please-transcribe run video.mp4 --work work/session --backend faster-whisper
 ```
 
-The first run downloads the model. Files are saved in `work/session/exports/`.
+The first run downloads the model. Original files are saved in `work/session/exports/`;
+automatically polished files go in `exports/polished/` after agent review.
 Repeat the command to resume; use a new folder for another recording.
 
 PDF needs [extra setup](docs/WORKFLOWS.md#export-formats).
@@ -88,24 +89,20 @@ Register this stdio server in your MCP client's settings, using absolute paths:
 On Windows, use `.venv\Scripts\please-transcribe.exe` as the executable path.
 The surrounding settings format depends on your client.
 
-Create a session with `run` first, or ask your agent to do it. MCP tools let the
-agent read the transcript, inspect screenshots, request audio clips, and save
-review notes. They work on existing sessions; transcription uses the CLI, while
-MCP can export a polished version after review.
-Ask: “Use `prepare_polish` to review unclear speech in session `session`, inspect
-the evidence, and export the accepted corrections with `export_polished`.”
-See [MCP tools and setup](docs/WORKFLOWS.md#python-and-mcp) for details.
+Ask your agent to run the transcription, then call `polish_session` to inspect
+unclear speech and `submit_polish` to return its review. Corrections and exports
+are applied automatically. See [MCP setup](docs/WORKFLOWS.md#python-and-mcp).
 
-### Polish uncertain speech
+### Automatic polishing
 
-```sh
-please-transcribe review polish --work work/session
-```
+`run` includes polishing by default. Codex, Claude Code, or another active agent
+continues through the review without manual approval commands. Unattended CLI
+use needs a [configured harness](docs/POLISH.md#unattended-cli); otherwise it
+returns an agent handoff. Use `--polish off` for baseline-only processing.
 
-Ask Codex, Claude Code, or another agent to follow `review/polish/instructions.md`.
-It can propose corrections, inspect the audio, and accept verified changes. MCP
-provides the same workflow. [Polished exports](docs/WORKFLOWS.md#polish-uncertain-speech)
-go under `exports/polished/`; the original transcript stays intact.
+In the corrected HTML, hover over a marked phrase to see the raw text. PDF uses
+yellow highlights with raw-text comments. Originals stay intact; corrected files
+are in `exports/polished/`. See [polishing details](docs/POLISH.md).
 
 ## YouTube
 

@@ -6,7 +6,8 @@ read existing sessions; only explicit extraction/review calls create new evidenc
 from .evidence import get_context, clip_audio, dense_frames
 from .triage import candidates, candidate_context, mark_coverage, status as review_status, decide
 from .review import import_response as submit_review
-from .polish import prepare_polish, export_polished
+from .polish import prepare_polish, export_polished, automatic_polish, submit_polish
 
 __all__ = ["get_context", "clip_audio", "dense_frames", "candidates", "candidate_context",
-           "mark_coverage", "review_status", "decide", "submit_review", "prepare_polish", "export_polished"]
+           "mark_coverage", "review_status", "decide", "submit_review", "prepare_polish", "export_polished",
+           "automatic_polish", "submit_polish"]

@@ -27,7 +27,7 @@ class PipelineTests(unittest.TestCase):
         self.source.write_bytes(b"owned recording fixture")
         self.work = self.root / "session"
         self.args = parser().parse_args(["run", str(self.source), "--work", str(self.work),
-            "--backend", "faster-whisper", "--language", "ko", "--formats", "md,html,json", "--progress", "quiet"])
+            "--backend", "faster-whisper", "--language", "ko", "--formats", "md,html,json", "--progress", "quiet", "--polish", "off"])
 
     def tearDown(self):
         self.temp.cleanup()
@@ -168,6 +168,40 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(1, asr.call_count)
             self.assertEqual(first["items"][1]["work"], second["items"][1]["work"])
             self.assertTrue((args.output_root / "batch.json").exists())
+
+    def test_default_automatic_polish_handoff_resumes_without_retranscribing(self):
+        self.args.polish = "auto"
+
+        def uncertain(work, **kwargs):
+            self.transcribe(work, **kwargs)
+            raw = read_json(work / "transcript.raw.json")
+            raw["segments"][0]["avg_logprob"] = -2
+            write_json(work / "transcript.raw.json", raw)
+
+        wrapper = self.root / "fixture_agent.py"
+        wrapper.write_text("import json,sys,pathlib\nr=json.load(sys.stdin)\n"
+            "pathlib.Path('harness-called').write_text('called')\n"
+            "p=json.load(open(r['packets'][0],encoding='utf-8'))\n"
+            "s=p['context']['segments'][0]\n"
+            "review=dict(snapshot=r['snapshot'],reviewer='Fixture agent',event_annotations=[],uncertainties=[],"
+            "corrections=[dict(segment_id=s['id'],original_text=s['text'],proposed_text=s['text'].replace('Hello.','Hello!'),"
+            "reason='Synthetic fixture',evidence_frame_ids=[])])\n"
+            "json.dump(dict(request_id=r['request_id'],review=review,audio_inspected_segment_ids=[s['id']],"
+            "images_inspected_segment_ids=[]),sys.stdout)\n", encoding="utf-8")
+        with patch("avtimeline.media.prepare", side_effect=self.prep), \
+             patch("avtimeline.transcript.transcribe", side_effect=uncertain) as asr:
+            handoff = run(self.args)
+            self.assertEqual("awaiting_polish", handoff["state"])
+            before = (self.work / "transcript.raw.json").read_bytes()
+            self.args.polish_command_json = json.dumps([sys.executable, str(wrapper)])
+            finished = run(self.args)
+            self.assertEqual("completed", finished["state"])
+            self.assertIn("Hello!", read_json(self.work / "exports/polished/transcript.json")["transcript"]["segments"][0]["text"])
+            self.assertEqual(1, asr.call_count)
+            self.assertEqual(before, (self.work / "transcript.raw.json").read_bytes())
+            called = (self.work / "harness-called").stat().st_mtime_ns
+            run(self.args)
+            self.assertEqual(called, (self.work / "harness-called").stat().st_mtime_ns)
 
 
 if __name__ == "__main__":

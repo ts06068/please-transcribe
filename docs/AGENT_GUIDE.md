@@ -51,8 +51,9 @@ does not install the browser or all required fonts.
 > Preserve the original ASR transcript and report exactly which segments and
 > modalities you reviewed.
 
-`run` generates review packets but does not run an LLM review itself. A reviewed
-result requires the agent to inspect evidence and submit its report. Reviewing
+`run` defaults to automatic polish. The active agent follows its handoff, inspects
+evidence, and submits the automatic response; decisions and export then continue
+without manual approval commands. A configured harness can run the same loop unattended. Reviewing
 part of a recording must not be presented as a review of the whole recording.
 
 ### Resume interrupted processing

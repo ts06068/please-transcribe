@@ -60,6 +60,7 @@ def diagnose(*, endpoint: str | None = None, connection: Path | None = None,
         add("youtube_javascript_runtime", runtime is not None, "Install Node.js 22+ or Deno 2.3+ for YouTube",
             runtime=runtime)
     if pdf:
+        add("pymupdf", importlib.util.find_spec("pymupdf") is not None, "python -m pip install '.[pdf]'")
         installed = importlib.util.find_spec("playwright") is not None
         add("playwright", installed, "python -m pip install '.[pdf]'")
         if installed:

@@ -145,7 +145,7 @@ class EvidenceTests(unittest.TestCase):
                     names = {tool.name for tool in tools.tools}
                     self.assertTrue({"get_context", "get_screen_image", "get_audio_excerpt", "extract_dense_frames",
                                      "submit_review", "get_review_status", "decide_candidate",
-                                     "prepare_polish", "export_polished"} <= names)
+                                     "prepare_polish", "export_polished", "polish_session", "submit_polish"} <= names)
                     result = await client.call_tool("get_context", {"session_name": self.work.name, "start": 59, "end": 64})
                     self.assertFalse(result.isError)
                     self.assertIn("Aquí", str(result.content))
@@ -177,6 +177,20 @@ class EvidenceTests(unittest.TestCase):
                     self.assertFalse(polished.isError)
                     self.assertEqual("polished", read_json(self.work / "exports/polished/transcript.json")["text_version"])
                     self.assertEqual(" Hello, hello!", read_json(self.work / "exports/polished/transcript.json")["transcript"]["segments"][0]["text"])
+                    automatic = await client.call_tool("polish_session", {"session_name": self.work.name, "formats": ["json"]})
+                    self.assertFalse(automatic.isError)
+                    import json
+                    payload = automatic.structuredContent or json.loads(automatic.content[0].text)
+                    self.assertEqual("awaiting_polish", payload["state"])
+                    result = await client.call_tool("submit_polish", {"session_name": self.work.name,
+                        "formats": ["json"], "response": {"request_id": payload["request"]["request_id"],
+                        "review": {"snapshot": self.data["snapshot"], "reviewer": "Automatic SDK fixture",
+                            "corrections": [], "event_annotations": [], "uncertainties": [
+                                {"segment_id": "s000003", "reason": "Audio remains uncertain"}]},
+                        "audio_inspected_segment_ids": [], "images_inspected_segment_ids": []}})
+                    self.assertFalse(result.isError)
+                    completed = result.structuredContent or json.loads(result.content[0].text)
+                    self.assertEqual("completed", completed["state"])
                     outside = await client.call_tool("get_context", {"session_name": "../../outside", "start": 0, "end": 1})
                     self.assertTrue(outside.isError)
 

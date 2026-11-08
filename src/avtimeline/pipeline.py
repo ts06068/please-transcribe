@@ -16,9 +16,9 @@ from .progress import Progress
 
 
 @contextmanager
-def session_lock(work: Path):
+def session_lock(work: Path, *, name: str = ".pipeline.lock"):
     work.mkdir(parents=True, exist_ok=True)
-    path = work / ".pipeline.lock"
+    path = work / name
     handle = path.open("a+b")
     try:
         if os.name == "nt":
@@ -93,7 +93,7 @@ class Pipeline:
         self.progress.emit("completed", name, elapsed=record["elapsed"])
 
 
-def run(args, *, reporter: Progress | None = None) -> dict:
+def _run_base(args, *, reporter: Progress | None = None) -> dict:
     from . import intake
     from .media import prepare
     from .transcript import transcribe, speech_audit
@@ -228,6 +228,8 @@ def run(args, *, reporter: Progress | None = None) -> dict:
                         sorted((work / "coverage").glob("*.json")) +
                         ([work / "inspection/evidence.json"] if (work / "inspection/evidence.json").exists() else []))
         export_input = {"timeline": file_hash(work / "timeline.json"),
+                        "renderer": {name: file_hash(Path(__file__).with_name(name))
+                                     for name in ("export.py", "annotations.py")},
                         "reviews": {str(p.relative_to(work)): file_hash(p) for p in review_files}}
         failures = []
         for fmt in dict.fromkeys(formats):
@@ -245,6 +247,45 @@ def run(args, *, reporter: Progress | None = None) -> dict:
                   "review": "bundle_created; LLM review is a separate step"}
         write_json(work / "run-result.json", result)
         return result
+
+
+def run(args, *, reporter: Progress | None = None) -> dict:
+    result = _run_base(args, reporter=reporter)
+    if getattr(args, "polish", "auto") == "off":
+        return result
+    from .polish import automatic_polish
+    progress = reporter or Progress(getattr(args, "progress", "text"))
+    stopped = threading.Event()
+    thread = threading.Thread(target=progress.heartbeat,
+        args=("polish", stopped, time.monotonic()), daemon=True)
+    progress.emit("started", "polish")
+    thread.start()
+    try:
+        value = getattr(args, "polish_command_json", None) or os.environ.get("PLEASE_TRANSCRIBE_POLISH_COMMAND")
+        command = json.loads(value) if value else None
+        polishing = automatic_polish(args.work.resolve(), command=command,
+            formats=[fmt.strip() for fmt in args.formats.split(",") if fmt.strip()],
+            refresh=getattr(args, "polish_refresh", False))
+        result["polish"] = polishing
+        result["review"] = "automatic_polish_" + polishing["state"]
+        if polishing["state"] == "failed":
+            result["state"] = "failed"
+            result["failures"] += polishing["failures"]
+        elif result["state"] != "failed":
+            result["state"] = polishing["state"]
+        if polishing["state"] == "completed":
+            result["polished_exports"] = str(args.work.resolve() / "exports/polished")
+            result["primary_exports"] = result["polished_exports"]
+        progress.emit(polishing["state"], "polish")
+    except Exception as exc:
+        result["state"] = "failed"
+        result["failures"].append({"stage": "polish", "error": str(exc)})
+        progress.emit("failed", "polish")
+    finally:
+        stopped.set()
+        thread.join()
+    write_json(args.work.resolve() / "run-result.json", result)
+    return result
 
 
 def batch(args) -> dict:
@@ -278,4 +319,6 @@ def batch(args) -> dict:
         index.append(f"- {label}: {item['state']}")
     args.output_root.mkdir(parents=True, exist_ok=True)
     (args.output_root / "index.md").write_text("\n".join(index) + "\n", encoding="utf-8")
-    return {"items": results, "state": "failed" if any(r["state"] == "failed" for r in results) else "completed"}
+    state = ("failed" if any(r["state"] == "failed" for r in results) else
+             "awaiting_polish" if any(r["state"] == "awaiting_polish" for r in results) else "completed")
+    return {"items": results, "state": state}

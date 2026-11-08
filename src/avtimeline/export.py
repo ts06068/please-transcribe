@@ -25,7 +25,7 @@ def document_items(data: dict):
     return sorted(items, key=lambda item: (item[0], item[1]))
 
 
-def render_html(data: dict, reviews: list[dict], work: Path) -> str:
+def render_html(data: dict, reviews: list[dict], work: Path, *, pdf_links: bool = False) -> str:
     esc = html.escape
     title = esc(data["manifest"]["source"]["name"])
     chunks = ["<!doctype html>", '<html lang="und">', '<head><meta charset="utf-8">',
@@ -39,11 +39,16 @@ def render_html(data: dict, reviews: list[dict], work: Path) -> str:
                       f'{data["polish"]["unresolved_candidates"]} unresolved review candidates. '
                       'Only accepted audio-reviewed corrections are applied. '
                       'Corrected words have not been realigned; original ASR is preserved separately.</p>')
+    if data.get("raw_annotations"):
+        chunks.append('<p>Marked speech: ' + ('open its highlight comment to read the raw ASR text.' if pdf_links
+                      else 'hover over a marked phrase to read the raw ASR text.') + '</p>')
     link_map = {link["segment_id"]: link for link in data["links"]}
     for _, _, kind, item in document_items(data):
         if kind == "segment":
             lang = esc(item.get("language") or "und", quote=True)
-            text = esc(item["text"]).replace("\n", "<br>")
+            from .annotations import speech_html
+            marks = [a for a in data.get("raw_annotations", []) if a["segment_id"] == item["id"]]
+            text = speech_html(item, marks, pdf_links=pdf_links)
             chunks += [f'<section id="{esc(item["id"])}"><h2>{timestamp(item["start"])}–'
                        f'{timestamp(item["end"])}</h2>', f'<p lang="{lang}" dir="auto">{text}</p>']
             frames = link_map[item["id"]]["frame_ids"]
@@ -188,6 +193,21 @@ def _export(work: Path, output: Path, formats: list[str], *, text_version: str) 
         from .polish import apply_polish
         data = apply_polish(work, data)
         output = output / "polished"
+    from .annotations import annotations
+    from .triage import candidates
+    # Ignore review artifacts for an explicitly historical/stale export snapshot.
+    from .evidence import load
+    current = read_json(work / "timeline.json")
+    try:
+        load(work)
+    except ValueError:
+        queue = []
+    else:
+        queue = candidates(work)["candidates"] if current["snapshot"] == data["snapshot"] else []
+    if text_version == "polished":
+        latest = {d["candidate_id"]: d for d in data["decisions"]}
+        queue = [c for c in queue if latest.get(c["id"], {}).get("decision") not in ("accepted", "rejected")]
+    data["raw_annotations"] = annotations(data, queue)
     output.mkdir(parents=True, exist_ok=True)
     paths = []
     document = render_html(data, reviews, work) if {"html", "pdf"} & set(formats) else None
@@ -216,8 +236,14 @@ def _export(work: Path, output: Path, formats: list[str], *, text_version: str) 
                 try:
                     page = browser.new_page()
                     page.route("**/*", lambda route: route.abort())
-                    page.set_content(document, wait_until="load")
-                    page.pdf(path=str(path), format="A4")
+                    printed = render_html(data, reviews, work, pdf_links=True)
+                    page.set_content(printed, wait_until="load")
+                    content = page.pdf(format="A4")
+                    if data["raw_annotations"]:
+                        from .annotations import annotate_pdf
+                        annotate_pdf(content, data["raw_annotations"], path)
+                    else:
+                        path.write_bytes(content)
                 finally:
                     browser.close()
         paths.append(path)

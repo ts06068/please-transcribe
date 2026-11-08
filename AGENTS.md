@@ -77,8 +77,12 @@ use faster-whisper's `--multilingual`. Do not claim language detection is perfec
 On an Apple Silicon macOS host, `transcribe --backend mlx` is available. Do not
 replace a requested accuracy-oriented model with a tiny smoke-test model silently.
 
-`run` combines preparation, ASR, build, bundle, and export. It does **not** perform
-LLM review. For a user who asks for reviewed output, complete the review below.
+`run` combines preparation, ASR, build, and export with automatic polish by default.
+If it returns `awaiting_polish` (CLI exit 2), you are the active agent: read the
+request, inspect the evidence, and submit an automatic response. Continue through
+all pages and exports without asking the user to operate review commands. A
+configured harness runs this loop unattended. Do not stop at packet preparation.
+Honor `--polish off` only when the user requests baseline-only output.
 `run` resumes verified stages automatically; repeat the same request after an
 interruption. Progress is on stderr (`--progress json` for machine events). Use a
 new session for changed inputs/ASR options. `batch` processes local paths and URLs
@@ -116,17 +120,18 @@ implementing the documented stdin/stdout protocol; do not invent one vendor's CL
 flags or read/copy account credentials into containers.
 
 Use `review focus` for uncertainty candidates with audio and screen evidence.
-When asked to polish uncertain speech, call `review polish` / MCP `prepare_polish`,
-follow `review/polish/instructions.md`, inspect the referenced evidence, submit
-proposals, and record decisions. Continue through the requested candidate pages;
-preparing packets alone is not a completed polish. Accept only audio-supported
-speech corrections. If the harness cannot inspect audio, defer those proposals
-and report the limitation; never manufacture an audio-inspection attestation.
-Export the accepted edits with `export --text-version polished` or MCP
-`export_polished`. This writes a separate `exports/polished/` view, retaining the
-baseline and default exports. Conflicting accepted edits must be resolved first.
-For corrected segments, word timing/scores describe only the original ASR and
-must not be presented as newly aligned edited words. See docs/POLISH.md.
+Polishing is part of a transcription request by default. Use MCP `polish_session`
+and `submit_polish`, or write the automatic response and call `review apply-polish`.
+Follow `review/polish/instructions.md` and `automatic-response.schema.json`.
+Continue until the result is completed and deliver `primary_exports` / the polished
+folder. Do not ask for per-correction permission. Record audio and image inspection
+truthfully; the application accepts only audio-verified edits and retains unclear
+speech. A tool returning audio does not establish that this harness heard it.
+If audio is unsupported, return empty audio-inspection IDs and explicit uncertainty.
+The pass can finish with unresolved candidates; report that scope honestly.
+Original ASR/default exports remain available. HTML marked phrases expose raw text
+through native title tooltips. PDF has yellow highlights and raw-text comments.
+Corrected words are not realigned. See docs/POLISH.md for the automatic protocol.
 `inspect context`, `inspect audio`, and `inspect frames` investigate bounded
 intervals. Dense frames receive citable IDs without changing baseline observations.
 Use `review coverage` only for segments actually inspected and distinguish audio
@@ -153,7 +158,7 @@ themes, or generated illustrations. Keep Markdown's companion `frames/` folder.
 Check that requested files exist and are nonempty. Check that exported JSON
 retains the original segment IDs, texts, word data, and ordering from
 `transcript.raw.json`; do not count review suggestions as replacements.
-For an explicitly requested polished view, check that only accepted audio-reviewed
+For the default polished view, check that only accepted audio-reviewed
 edits were applied, segment IDs/times/order stayed intact, and `original_transcript`
 retains original text/words. Verify unresolved-candidate counts and report them.
 Verify that referenced image assets exist. Inspect available audit findings and imported review

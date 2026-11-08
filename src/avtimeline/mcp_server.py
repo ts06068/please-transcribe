@@ -23,6 +23,26 @@ def create_server(root: Path):
         return path
 
     @server.tool()
+    def polish_session(session_name: str, formats: list[str] | None = None, refresh: bool = False) -> dict:
+        """Automatically export or return the next page for this active agent to polish.
+
+        If awaiting_polish, inspect its packets and call submit_polish; continue
+        without asking the user to operate the review CLI.
+        """
+        return api.automatic_polish(session(session_name), formats=formats, refresh=refresh)
+
+    @server.tool()
+    def submit_polish(session_name: str, response: dict, formats: list[str] | None = None) -> dict:
+        """Submit an automatic response with explicit inspection lists and continue.
+
+        Audio-inspected corrections are decided automatically. No manual decide
+        step is needed. The result contains exports or the next agent request.
+        """
+        work = session(session_name)
+        result = api.submit_polish(work, response)
+        return {**api.automatic_polish(work, formats=formats), "submitted": result}
+
+    @server.tool()
     def prepare_polish(session_name: str, offset: int = 0, limit: int = 10) -> dict:
         """Prepare paginated uncertain-speech packets for this agent to correct.
 

@@ -2,7 +2,7 @@
 
 The executable is `please-transcribe`; `avtimeline` remains a compatible alias.
 The Python module is `avtimeline`. The baseline preserves original-language ASR
-text; reviews, decisions, and explicit polished exports are separate. Exported HTML uses native components
+text; reviews, decisions, and polished exports are saved separately. Exported HTML uses native components
 and extracted images, with no styles or scripts.
 
 ## Diagnose before loading a model
@@ -55,7 +55,9 @@ transcribing again. `run-result.json` lists successful completion or export erro
 The optional `--audit` needs the CPU extra; if it fails, fix the dependency or rerun
 without `--audit` and explicitly report that audit coverage was unavailable.
 
-`run` creates review packets; it does not perform an LLM review by itself.
+`run` defaults to automatic polishing: a configured harness runs the review loop,
+or `awaiting_polish` hands it to the active agent. CLI exit 2 indicates that handoff.
+Use `--polish off` for original-ASR-only processing. See [automatic polishing](POLISH.md).
 
 ## URL input and batch
 
@@ -166,17 +168,13 @@ where the recording has no audio samples.
 
 ## Polish uncertain speech
 
-```sh
-please-transcribe review polish --work work/session
-please-transcribe export --work work/session --output work/session/exports \
-  --text-version polished --formats md,html,json,srt,vtt
-```
+Polishing now runs by default after ASR. A configured harness or the active agent
+returns the automatic response; decisions and corrected exports require no manual
+approval commands. Resume an existing session with `review polish --work SESSION`.
+See [automatic polishing](POLISH.md) for CLI/MCP handoffs and response schema.
 
-Between these commands, ask your agent to inspect the packets, submit proposals,
-and record audio-supported acceptance decisions. Only accepted corrections are
-applied under `exports/polished/`. See [the polishing workflow](POLISH.md) for
-Codex/Claude Code requests, file/MCP protocols, conflicts, and alignment limits.
-See [cloud storage](CLOUD_STORAGE.md) for source recordings on a mounted drive.
+HTML marked phrases show the raw text on hover. PDF uses yellow highlights with
+raw-text comments. Source recordings can be on a [mounted cloud drive](CLOUD_STORAGE.md).
 
 ## Export formats
 
@@ -187,7 +185,7 @@ please-transcribe export --work work/session --output work/session/exports \
 
 Markdown and JSON use companion image folders; keep those folders when sharing
 the output. HTML embeds its images in one file. Default subtitles retain original
-ASR text. Explicit polished exports apply only accepted audio-reviewed edits.
+ASR text. The default polished view applies only accepted audio-reviewed edits.
 
 For local PDF export, install the extra and its browser in your environment:
 
@@ -197,8 +195,8 @@ python -m playwright install chromium
 ```
 
 On Linux, you may also need `python -m playwright install-deps chromium`.
-Install fonts that cover your recording's languages. PDF prints the plain HTML
-using Chromium's default layout. Other formats do not need a browser.
+Install fonts that cover your recording's languages. PDF prints the plain HTML using Chromium's default layout, then adds native yellow
+highlights and raw-text comments with PyMuPDF. Other formats do not need a browser.
 For a Docker image with PDF support, build with `--build-arg WITH_PDF=1`.
 
 ## Python and MCP
@@ -231,7 +229,7 @@ Use the Windows virtual environment executable path on Windows. Session names
 are relative to the root; paths escaping that root are rejected. Do not share a
 root containing sessions another user should not read.
 
-The tools are `prepare_polish`, `export_polished`, `get_context`, `get_screen_image`, `get_audio_excerpt`,
+The tools are `polish_session`, `submit_polish`, `prepare_polish`, `export_polished`, `get_context`, `get_screen_image`, `get_audio_excerpt`,
 `extract_dense_frames`, `get_review_status`, `get_review_candidates`,
 `get_candidate_context`, `submit_review`, `mark_reviewed`, and `decide_candidate`.
 Screen and audio tools return actual media content. Clients without a modality

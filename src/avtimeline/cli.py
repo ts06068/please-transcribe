@@ -59,6 +59,13 @@ def add_asr(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--retry-failed", action="store_true", help="Retry a failed remote job once, preserving attempt history")
 
 
+def add_polish(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--polish", choices=["auto", "off"], default="auto",
+                        help="Automatically polish or hand off to the active agent (default: auto)")
+    parser.add_argument("--polish-command-json", help="Existing agent wrapper argv; otherwise uses PLEASE_TRANSCRIBE_POLISH_COMMAND")
+    parser.add_argument("--polish-refresh", action="store_true", help="Revisit previously deferred polish candidates")
+
+
 def add_ssh(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--ssh", help="Mac server SSH target, e.g. user@server; omit to install on this Mac")
     parser.add_argument("--ssh-port", type=int, default=22)
@@ -134,12 +141,17 @@ def parser() -> argparse.ArgumentParser:
     focus.add_argument("--work", type=Path, required=True)
     focus.add_argument("--limit", type=int, default=20)
     focus.add_argument("--offset", type=int, default=0)
-    polish = actions.add_parser("polish", help="Prepare uncertain speech for agent correction")
+    polish = actions.add_parser("polish", help="Polish uncertain speech automatically or hand off to the active agent")
     polish.add_argument("--work", type=Path, required=True)
     polish.add_argument("--limit", type=int, default=10)
-    polish.add_argument("--offset", type=int, default=0)
     polish.add_argument("--command-json", help="Optional existing harness wrapper; JSON argv, no shell")
     polish.add_argument("--timeout", type=positive, default=600)
+    polish.add_argument("--formats", help="Defaults to the original run's requested formats")
+    polish.add_argument("--refresh", action="store_true", help="Revisit previously deferred candidates")
+    apply_polish = actions.add_parser("apply-polish", help="Submit an automatic response and continue through export")
+    apply_polish.add_argument("response", type=Path)
+    apply_polish.add_argument("--work", type=Path, required=True)
+    apply_polish.add_argument("--formats", help="Defaults to the original run's requested formats")
     status = actions.add_parser("status", help="Explicit review coverage and pending candidates")
     status.add_argument("--work", type=Path, required=True)
     decision = actions.add_parser("decide", help="Append an accepted/rejected/deferred candidate decision")
@@ -187,6 +199,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--progress", choices=["text", "json", "quiet"], default="text")
     add_visual(run)
     add_asr(run)
+    add_polish(run)
     batch = commands.add_parser("batch", help="Process local recordings and/or URLs independently; resume automatically")
     batch.add_argument("sources", nargs="*")
     batch.add_argument("--input-list", type=Path, help="UTF-8 text file, one path or URL per line")
@@ -196,6 +209,7 @@ def parser() -> argparse.ArgumentParser:
     batch.add_argument("--progress", choices=["text", "json", "quiet"], default="text")
     add_visual(batch)
     add_asr(batch)
+    add_polish(batch)
     return root
 
 
@@ -257,12 +271,26 @@ def execute(args: argparse.Namespace) -> None:
         elif args.action == "run":
             print(run_command(args.work, json.loads(args.command_json), timeout=args.timeout))
         elif args.action == "polish":
-            from .polish import prepare_polish
-            result = prepare_polish(args.work, limit=args.limit, offset=args.offset)
-            if args.command_json:
-                result["report"] = str(run_command(args.work, json.loads(args.command_json),
-                    timeout=args.timeout, request_path=result["request"]).relative_to(args.work))
+            import os
+            from .polish import automatic_polish
+            value = args.command_json or os.environ.get("PLEASE_TRANSCRIBE_POLISH_COMMAND")
+            result = automatic_polish(args.work, command=json.loads(value) if value else None,
+                                      formats=args.formats.split(",") if args.formats else None,
+                                      timeout=args.timeout, page_size=args.limit, refresh=args.refresh)
             print(json.dumps(result, ensure_ascii=False, indent=2))
+            if result["state"] == "failed":
+                raise SystemExit(1)
+            if result["state"] == "awaiting_polish":
+                raise SystemExit(2)
+        elif args.action == "apply-polish":
+            from .polish import submit_polish, automatic_polish
+            submit_polish(args.work, read_json(args.response))
+            result = automatic_polish(args.work, formats=args.formats.split(",") if args.formats else None)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if result["state"] == "failed":
+                raise SystemExit(1)
+            if result["state"] == "awaiting_polish":
+                raise SystemExit(2)
         else:
             from .triage import focus, status, decide, mark_coverage
             if args.action == "focus":
@@ -299,12 +327,16 @@ def execute(args: argparse.Namespace) -> None:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["state"] == "failed":
             raise SystemExit(1)
+        if result["state"] == "awaiting_polish":
+            raise SystemExit(2)
     elif args.command == "batch":
         from .pipeline import batch
         result = batch(args)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["state"] == "failed":
             raise SystemExit(1)
+        if result["state"] == "awaiting_polish":
+            raise SystemExit(2)
 
 
 def main() -> None:

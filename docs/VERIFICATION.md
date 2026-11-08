@@ -51,3 +51,27 @@ model-serving configuration or private-network route was changed.
 
 No external YouTube recording or transcript is included in the repository. The
 published demo and its image-only review provenance remain unchanged.
+
+## Automatic polishing and raw-text annotations (2026-11-09)
+
+- Linux ARM64 with media, PDF, URL, and MCP dependencies: **65 tests passed, zero
+  skipped**. macOS: **65 tests run, six optional media/PDF tests skipped**.
+- Tests execute the default pipeline handoff, a configured harness, and actual MCP
+  SDK calls through `polish_session` and `submit_polish`. Audio-verified fixture
+  edits are accepted and exported without manual decision commands. Missing audio
+  defers edits; stale responses and out-of-scope inspection claims are rejected.
+- A separate synthetic session completed the handoff and exported HTML, PDF, and
+  JSON with English, Korean, and Spanish edits and an unresolved passage. Raw ASR
+  stayed byte-for-byte unchanged. These are controlled test attestations, not an
+  accuracy assessment or a claim of real audio review by a model.
+- Chromium and PyMuPDF generated native yellow PDF Highlight annotations with
+  Unicode raw-text comments and popups. Tests check annotation color, visible yellow
+  pixels, repeated-phrase placement, and a passage spanning multiple PDF pages.
+  Temporary locator links are absent from the PDF. Rendered pages were also
+  inspected visually.
+- HTML checks cover exact raw-text tooltips, escaping and multiline text, with no
+  CSS or JavaScript. Resumption reuses review results and unchanged exports while
+  preserving the initially requested formats. A refresh starts another review pass.
+- The wheel builds successfully, and the existing public demo still passes its
+  six-format integrity check. No private recordings or generated fixture outputs
+  were added to the public repository.
