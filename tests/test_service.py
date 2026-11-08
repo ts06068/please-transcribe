@@ -19,7 +19,7 @@ import wave
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from avtimeline.connection import request, save_connection, upload, remote_transcribe
+from avtimeline.connection import request, save_connection, upload, remote_transcribe, ServerHTTPError
 from avtimeline.model_service import Supervisor, process_job
 from avtimeline.server_install import bundle_source
 from avtimeline.service_api import API
@@ -97,8 +97,18 @@ class ServiceTests(unittest.TestCase):
         # Even losing the receipt after server acceptance must not create another
         # model job; the same upload identity is idempotent on the server.
         (self.root / "remote-job.json").unlink()
-        resumed = remote_transcribe(self.root, endpoint=None, config=profile, model=None,
-                                    language="auto", multilingual=False)
+        unavailable = {"/v1/jobs/" + jobs[0].name, "/v1/jobs/" + jobs[0].name + "/result"}
+
+        def temporarily_unavailable(connection, path, **kwargs):
+            if path in unavailable:
+                unavailable.remove(path)
+                raise ServerHTTPError(503, "Job state unavailable")
+            return request(connection, path, **kwargs)
+
+        with patch("avtimeline.connection.request", side_effect=temporarily_unavailable):
+            resumed = remote_transcribe(self.root, endpoint=None, config=profile, model=None,
+                                        language="auto", multilingual=False, poll_interval=0.01)
+        self.assertFalse(unavailable)
         self.assertEqual(result, resumed)
         self.assertEqual(1, len(list((self.root / "queue/jobs").iterdir())))
 

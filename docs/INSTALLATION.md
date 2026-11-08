@@ -220,7 +220,9 @@ deployment, not a distributed storage or scheduler service.
 The client retains `remote-job.json`. If polling times out or connectivity fails,
 repeat the same managed `run` request, or use standalone `transcribe` on the same
 prepared session. Polling resumes without a second upload. Uploads also use an
-idempotency key, so losing the local receipt still recovers the original job
+idempotency key. Temporary HTTP 503 responses during status/result polling are
+retried within the polling timeout, without another upload. The
+same idempotency key lets a lost local receipt recover the original job
 while the server retains it. The single API process reclaims unpublished partial
 uploads when it restarts. After fixing a model failure, use `--retry-failed` on
 run/transcribe to re-upload and try once, retaining the previous failed attempt.

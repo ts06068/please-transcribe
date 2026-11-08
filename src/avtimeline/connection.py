@@ -134,7 +134,17 @@ def remote_transcribe(work: Path, *, endpoint: str | None, config: Path | None,
     while time.monotonic() < deadline:
         try:
             status = request(connection, "/v1/jobs/" + receipt["job_id"])
+            if status["state"] == "completed":
+                return request(connection, "/v1/jobs/" + receipt["job_id"] + "/result")
         except ServerHTTPError as exc:
+            # A status/result can be temporarily unavailable while its files
+            # are being published. Keep polling the same job within the timeout;
+            # do not turn a transient read failure into another model upload.
+            if exc.status == 503:
+                if progress:
+                    progress(state="unavailable", job_id=receipt["job_id"])
+                time.sleep(poll_interval)
+                continue
             if exc.status == 404 and retry_failed and not retried:
                 upload(connection, audio, language, multilingual, idempotency_key=fingerprint(identity), retry_failed=True)
                 retried = True
@@ -142,8 +152,6 @@ def remote_transcribe(work: Path, *, endpoint: str | None, config: Path | None,
             raise
         if progress:
             progress(state=status["state"], job_id=receipt["job_id"])
-        if status["state"] == "completed":
-            return request(connection, "/v1/jobs/" + receipt["job_id"] + "/result")
         if status["state"] == "failed":
             if retry_failed and not retried:
                 upload(connection, audio, language, multilingual, idempotency_key=fingerprint(identity), retry_failed=True)
