@@ -2,182 +2,147 @@
 
 **Transcribe what was said. See what was shown.**
 
-Turn presentations, screencasts, demos, and lectures into original-language
-transcripts linked to timestamped screen images. Review uncertain speech with
-your preferred agent, and export Markdown, plain HTML, PDF, JSON, SRT, or WebVTT.
-Run the client and local CPU pipeline on **Linux, Windows, or macOS**. Choose
-local inference, a Docker environment, or a configured remote transcription server.
+[![CI](https://github.com/ts06068/please-transcribe/actions/workflows/checks.yaml/badge.svg?branch=main)](https://github.com/ts06068/please-transcribe/actions/workflows/checks.yaml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[Read the demo](examples/demo/index.md) · [Download HTML](examples/demo/index.html) ·
-[PDF](examples/demo/index.pdf) · [Review queue](examples/demo/review.html) ·
-[Demo source and provenance](examples/demo/README.md)
+Original-language video transcripts linked to timestamped screen images, powered
+by Whisper large-v3. Run locally on **Linux, Windows, or macOS**, use Docker, or
+connect to a shared ASR server. Review uncertain speech with your preferred agent.
+
+[Demo](#demo) · [Key features](#key-features) · [Getting started](#getting-started) ·
+[Usage](#usage) · [Model specification](#transcription-specification) ·
+[Outputs](#outputs) · [Documentation](#documentation-and-development) ·
+[Contributing](#contributing) · [License](#license)
+
+## Demo
+
+[Read the transcript](examples/demo/index.md) ·
+[Download HTML](examples/demo/index.html) · [PDF](examples/demo/index.pdf) ·
+[Explore the review queue](examples/demo/review.html)
 
 ![Successful Python execution producing 42, extracted from the demo recording](examples/demo/frames/f000004.jpg)
 
-An actual screen image from the demo: the example program defines `result` and
-prints `42`. The demo follows a code change from an error to successful execution.
+An actual screen image from the demo recording: the program defines `result` and
+prints `42`. The transcript links recognized speech to screen evidence before and
+after the code changes. This controlled demo uses synthesized narration and actual
+Python execution; see its [source and provenance](examples/demo/README.md).
 
-- **Beyond slides:** capture screen changes in code demos, browser walkthroughs,
-  slides, and other recordings, plus periodic images for context.
-- **Original languages:** English, Korean, Spanish, and other Whisper-supported
-  languages; transcription and translation are separate tasks.
-- **Keep the original:** immutable ASR text, separate correction proposals,
-  explicit review decisions, and audio/image review coverage.
-- **Use your own tools:** CLI, Python API, file-based review, and optional MCP.
-  Work with Codex, Claude, Antigravity, or another capable harness.
-- **Run locally or share a server:** CPU inference, optional Apple Silicon MLX,
-  or an authenticated remote ASR endpoint. No paid API is required.
-- **Portable outputs:** native HTML elements and extracted images, without CSS
-  or JavaScript. Resume interrupted work and process batches independently.
+## Key features
 
-This is an early release. Visual changes are pixel-based candidates, not semantic
-understanding. ASR can omit or misrecognize speech. Review helps investigate these
-errors; it does not guarantee a complete or accurate transcript.
+- **Follow more than slides.** Capture screen changes in presentations, code demos,
+  browser walkthroughs, and lectures, with periodic images for context.
+- **Preserve spoken languages.** Transcribe English, Korean, Spanish, and other
+  Whisper-supported languages without automatically translating or summarizing.
+- **Keep the evidence.** Retain original ASR text, word times, extracted images,
+  audio excerpts, and separate correction proposals and decisions.
+- **Review with your own agent.** Use files, CLI, Python, or optional MCP with
+  Codex, Claude Code, Antigravity, or another capable harness.
+- **Resume and batch.** Reuse verified stages after interruptions and process
+  local recordings or video URLs with per-item failure reporting.
+- **Share portable results.** Export Markdown, plain HTML, PDF, JSON, SRT, and
+  WebVTT. HTML uses native elements and embedded screen images, without CSS or JS.
 
-## Transcription specification
+This is an early release. Screen events are pixel-change candidates, and ASR can
+omit or misrecognize speech. Review coverage and uncertainty remain explicit;
+automatic processing does not certify a complete or accurate transcript.
 
-The default ASR model is **OpenAI Whisper large-v3** (approximately 1.55 billion
-parameters). The model and the inference engine are separate choices: the portable
-default uses faster-whisper/CTranslate2, while MLX is an optional implementation.
-See [OpenAI's model information](https://github.com/openai/whisper#available-models-and-languages).
+## Getting started
 
-| Setting | Current specification |
-| --- | --- |
-| Local default | `faster-whisper`, model `large-v3` (`Systran/faster-whisper-large-v3`), CPU, `int8`. |
-| Optional local MLX | `mlx-whisper`, model `mlx-community/whisper-large-v3-mlx`, Apple Silicon; FP16 decoding by upstream default. |
-| Managed remote service | Server-selected Whisper model; default installer uses official large-v3 weights converted to MLX FP16. Optional native CPU worker uses faster-whisper INT8. |
-| Audio input to ASR | Full recording's selected audio stream, mono 16 kHz PCM16 WAV, converted to normalized float32 samples for inference. |
-| Task and languages | `transcribe`, original language; `auto` or an explicit Whisper language code. Per-window mixed-language detection is a faster-whisper option. |
-| Timing | Segment and word timestamps from the ASR engine, mapped to the common audio/video timeline. No separate WhisperX forced-alignment stage. |
-| Speech detection | No separate VAD prefilter for the baseline; engine silence heuristics still apply. Optional Silero VAD audit flags possible uncovered speech. |
-| Visual context | Screen images/OCR are review evidence; they are not fed into Whisper or used to silently rewrite the baseline. |
-| Published demo | Remote MLX large-v3, official checkpoint converted to FP16, English; see [the demo's exact configuration](examples/demo/README.md#transcription-configuration). |
+Choose local transcription or connect to an existing server. Local inference
+requires no paid API; model weights are downloaded on first use. The package is
+installed from this repository and is not currently published to PyPI.
 
-Model weights download on first use. `--model` selects a compatible repository or
-local model directory; `--device` and `--compute-type` configure local faster-whisper.
-Remote clients use server hardware/precision, not these local flags. Decoder
-settings not explicitly configured by this project inherit engine defaults.
+### Install locally
 
-The [full transcription specification](docs/TRANSCRIPTION.md) records model sources,
-checkpoint verification, decoder defaults and versions inspected, long-recording
-behavior, timestamp limitations, output metadata, and reproducibility boundaries.
-
-## Quick start: local transcription
-
-Prefer to let an agent install it? Copy a setup request from
-[install with Codex, Claude Code, or another agent](docs/INSTALLATION.md#install-with-an-agent).
-
-Requirements: Python 3.10+ and `ffmpeg`/`ffprobe` on `PATH`. Install FFmpeg through
-your operating system's package manager or [FFmpeg](https://ffmpeg.org/download.html).
-Install from this repository; the package is not currently published to PyPI.
+Requirements: Git, Python 3.10+, and `ffmpeg`/`ffprobe` on `PATH`. Install FFmpeg
+using your OS package manager or [FFmpeg's downloads](https://ffmpeg.org/download.html).
 
 ```sh
 git clone https://github.com/ts06068/please-transcribe.git
 cd please-transcribe
 python -m venv .venv
+
 # Linux/macOS:
 . .venv/bin/activate
 # Windows PowerShell instead:
 # .venv\Scripts\Activate.ps1
+
 python -m pip install -e '.[media,cpu]'
-
-please-transcribe doctor
-please-transcribe run presentation.mp4 --work work/session --language auto
+please-transcribe doctor --backend faster-whisper
+please-transcribe run presentation.mp4 --work work/session --backend faster-whisper
 ```
 
-The default local engine is faster-whisper, using `large-v3` on CPU with INT8
-computation. First use downloads model weights. Use `--model tiny` for a quick
-functionality check; evaluate accuracy on your own media before choosing a model.
-The executable `avtimeline` remains an alias; the Python package is `avtimeline`.
+The default local configuration is Whisper **large-v3, CPU, INT8**. Use `--model tiny`
+for a quick functionality check; evaluate accuracy on your recordings before
+choosing a production model. Results appear in `work/session/exports/`.
+The executable `avtimeline` is an alias; the Python package is `avtimeline`.
 
-Results appear in `work/session/exports/`. Repeat the same command to reuse verified
-stages or resume unfinished work. Choose a new session directory for a different
-recording or changed extraction/ASR options.
+### Install with an agent
 
-```sh
-please-transcribe run korean.mp4 --work work/korean --language ko
-please-transcribe run spanish.mp4 --work work/spanish --language es
-please-transcribe run mixed.mp4 --work work/mixed --multilingual
-```
+Open the repository in Codex, Claude Code, or another agent with file and terminal
+access, then ask:
 
-`--multilingual` detects language per decoding window with faster-whisper. The
-MLX adapter supports automatic or explicit language per recording, without this
-per-window option. Rapid switching within a window may still be inaccurate.
+> Read README.md, AGENTS.md, and docs/INSTALLATION.md. Install please-transcribe for
+> local CPU use in a project virtual environment on this operating system. Install
+> the required media tools, verify the CLI, and run doctor. Report the environment
+> path, checks performed, and any remaining steps.
 
-## Use an existing server
+Copy more specific prompts for [local use, an existing endpoint, or administrator
+server setup](docs/INSTALLATION.md#install-with-an-agent). No agent-account tokens
+need to be copied into this project or its containers.
 
-Install the lightweight client with `python -m pip install -e '.[media]'` and
-install FFmpeg. Get an endpoint and your own API key from the server administrator:
+### Connect to an existing server
+
+Install the media extra instead of the CPU extra: `python -m pip install -e '.[media]'`.
+Keep FFmpeg installed, and obtain an endpoint and your own API key from the administrator.
 
 ```sh
 please-transcribe connect --endpoint https://transcribe.example.org
-# Enter your key at the hidden prompt.
+# Enter your API key at the hidden prompt.
 please-transcribe doctor
 please-transcribe run presentation.mp4 --work work/session
 ```
 
-With a connection profile, remote transcription becomes the default. Audio goes
-to the configured server; screen extraction and exports stay on the client.
-If that server is unavailable, the client reports the error and retains its job
-receipt. It does not silently load a local model.
+With a saved connection profile, remote ASR becomes the default. Extracted audio
+goes to the configured server; screen extraction and exports stay on the client.
+An unavailable server is reported without silently loading a local model. See
+[installation and shared serving](docs/INSTALLATION.md) for per-user keys and networking.
 
-## Choose a deployment
+### Run in Docker
 
-| Mode | Where it runs | Setup |
-| --- | --- | --- |
-| Local CPU | Linux, Windows, macOS | Install the media and CPU extras; run faster-whisper locally. |
-| Docker CPU | A host with a compatible Docker runtime | Use the provided Dockerfile and Compose configuration. |
-| Remote client | Linux, Windows, macOS, development containers | Connect to an existing ASR endpoint; no local ASR weights are needed. |
-| Optional MLX acceleration | Apple Silicon macOS | Use the MLX adapter; this is one optional backend. |
-
-The client, evidence timeline, review protocol, and output formats are independent
-of the inference host. GPU engines need their own compatible hardware and runtime.
-The bundled `server install` provisioning adapter currently targets macOS; this
-limitation applies to that installer, not to the project as a whole. On other
-platforms, use the local/Docker CPU pipeline or connect to an existing endpoint.
-
-For administrators, the [installation guide](docs/INSTALLATION.md) explains the
-supported server provisioning path, per-user keys, Docker control, and lifecycle.
-Additional clients only install the client and connect. Use a trusted private
-connection or HTTPS for audio and credentials; routing and TLS are managed by
-the administrator.
-
-## Use through an agent
-
-Open this repository in an agent with file and terminal access, then ask:
-
-> Read AGENTS.md. Process `/path/to/presentation.mp4` with please-transcribe,
-> preserving every recognized utterance in its original language. Inspect the
-> screen evidence and record corrections and uncertainties separately from the
-> original transcript. Export Markdown and plain HTML. Report which audio and
-> images you actually inspected and provide the output paths.
-
-`run` creates review packets; it does not perform an LLM review itself. Your
-agent follows the generated review schema and imports its report. Review can use
-your existing harness; the project does not read account tokens or bundle vendor
-CLI wrappers. A text-only or image-only agent must report its modality limits.
-
-See the [agent guide](docs/AGENT_GUIDE.md), [operating instructions](AGENTS.md), and
-[Python/MCP setup](docs/WORKFLOWS.md#python-and-mcp).
-
-## Docker client
-
-Build a portable client with media tools, URL intake, MCP, VAD dependencies, and
-optional PDF support. ASR model weights are not included in the image.
+The provided Compose configuration runs local CPU inference and caches weights
+in a separate volume. Place the recording inside the host `work/` directory:
 
 ```sh
-docker build -f Dockerfile.client --build-arg WITH_PDF=1 -t please-transcribe-client .
-docker run --rm -it -v "$PWD:/work" please-transcribe-client --help
+mkdir -p work
+# Copy recording.mp4 into work/ before running.
+docker compose build
+docker compose run --rm avtimeline run /work/recording.mp4 --work /work/session
 ```
 
-For shared-server use, mount your private connection profile separately. See the
-[container client example](docs/INSTALLATION.md#container-client-alternative).
-For local CPU inference, `docker compose build` and `docker compose run --rm
-avtimeline run /work/recording.mp4 --work /work/session` use the provided CPU
-configuration. Place recordings in the host `work/` directory first. Add
-`--build-arg WITH_PDF=1` to the Compose build for PDF support.
+For a client without bundled ASR weights, build `Dockerfile.client` and connect to
+an existing endpoint. See [the Docker client guide](docs/INSTALLATION.md#container-client-alternative)
+for profile mounts and optional PDF support. GPU acceleration requires a compatible
+engine, hardware, and runtime; these CPU images do not configure CUDA or Metal.
 
-## Investigate and export
+## Usage
+
+### Transcribe, resume, or process a batch
+
+```sh
+please-transcribe run presentation.mp4 --work work/session --language auto
+please-transcribe run korean.mp4 --work work/korean --language ko
+please-transcribe run spanish.mp4 --work work/spanish --language es
+please-transcribe batch lecture.mp4 demo.mkv --output-root work/batch
+```
+
+Repeat the same `run` request to resume unfinished work or reuse verified results.
+Use a new session for a different recording or changed extraction/ASR settings.
+URL inputs require the URL extra; mixed-language per-window detection requires
+faster-whisper's `--multilingual`. See [workflows](docs/WORKFLOWS.md) for examples.
+
+### Investigate and review
 
 ```sh
 please-transcribe review focus --work work/session
@@ -185,50 +150,119 @@ please-transcribe inspect context --work work/session --start 60 --end 75
 please-transcribe inspect audio --work work/session --start 60 --end 70
 please-transcribe inspect frames --work work/session --start 62 --end 65 --interval 0.25
 please-transcribe review status --work work/session
+```
+
+`run` creates review packets but does not perform an LLM review. To review a session,
+open it in your agent and ask:
+
+> Follow AGENTS.md and the session's review instructions. Inspect the evidence,
+> record correction proposals and uncertainties separately from the original
+> transcript, and import a schema-valid report. Report which audio and images
+> you actually inspected, then regenerate Markdown and plain HTML.
+
+Agents can query short intervals, extract denser frames, and record review coverage.
+A harness without audio or image capabilities must report that limitation. See
+[the agent guide](docs/AGENT_GUIDE.md) and [Python/MCP setup](docs/WORKFLOWS.md#python-and-mcp).
+
+## Transcription specification
+
+The default model is **OpenAI Whisper large-v3**, approximately **1.55 billion
+parameters**. The model and inference engine are separate choices. Model details:
+[OpenAI Whisper](https://github.com/openai/whisper#available-models-and-languages).
+
+| Setting | Current specification |
+| --- | --- |
+| Local default | faster-whisper/CTranslate2; `large-v3` resolves to `Systran/faster-whisper-large-v3`; CPU, INT8. |
+| Optional local MLX | `mlx-community/whisper-large-v3-mlx`; Apple Silicon; upstream FP16 decoding default. |
+| Managed remote service | Server-selected model; default installer converts verified official large-v3 weights to MLX FP16. Optional native CPU worker uses faster-whisper INT8. |
+| Audio | Full selected audio stream, mono 16 kHz PCM16 WAV, normalized float32 input to ASR. |
+| Task/language | `transcribe`, original language; automatic detection or an explicit language code. Per-window mixed-language detection is a faster-whisper option. |
+| Timestamps | Engine segment and word estimates on the common audio/video timeline; no separate WhisperX forced-alignment model. |
+| VAD | No separate baseline VAD prefilter; engine silence heuristics still apply. Optional Silero VAD audit flags possible uncovered speech. |
+| Visual context | Screen images/OCR support review; they are not fed into Whisper or used to silently rewrite the baseline. |
+| Published demo | Remote MLX large-v3, official checkpoint converted to FP16, English; [exact configuration](examples/demo/README.md#transcription-configuration). |
+
+`--model` accepts a compatible repository or local path. `--device` and
+`--compute-type` control local faster-whisper; remote precision/hardware are
+server-controlled. Unspecified decoder options inherit upstream defaults.
+See [the full specification](docs/TRANSCRIPTION.md) for checkpoint hashes, inspected
+library versions, decoding settings, long-form behavior, and recorded metadata.
+
+### Platform and deployment support
+
+| Mode | Supported environment |
+| --- | --- |
+| Local CPU and evidence/export pipeline | Linux, Windows, macOS. |
+| Docker CPU | Hosts with a compatible Docker runtime. |
+| Remote client | Linux, Windows, macOS, and development containers. |
+| Optional MLX engine | Apple Silicon macOS. |
+| Bundled automated server provisioner | Currently macOS; this adapter uses LaunchAgents. |
+
+The project is not tied to the inference host. The bundled server provisioner's
+current platform restriction does not apply to clients or local/Docker CPU use.
+Use the [administrator guide](docs/INSTALLATION.md) for its supported setup path.
+
+## Outputs
+
+```sh
 please-transcribe export --work work/session --output work/session/exports \
   --formats md,html,pdf,json,srt,vtt
 ```
 
-| Format | Output | Sharing notes |
+| Format | Files | Sharing notes |
 | --- | --- | --- |
 | Markdown | `index.md` + images | Keep companion image folders together. |
-| HTML | `index.html` | Standalone, embedded images, no CSS/JavaScript. |
-| PDF | `index.pdf` | Prints the plain HTML with Chromium's default layout. |
-| JSON | `transcript.json` + images | Original speech, word times, observations, links, reviews. |
-| SRT | `transcript.srt` | Original ASR text; proposals do not replace subtitles. |
-| WebVTT | `transcript.vtt` | Original ASR text. |
+| HTML | `index.html` | Standalone; native tags and embedded images, no CSS/JavaScript. |
+| PDF | `index.pdf` | Chromium's default print layout of the plain HTML. |
+| JSON | `transcript.json` + images | Original speech, word times, observations, links, and reviews. |
+| SRT / WebVTT | `transcript.srt` / `transcript.vtt` | Original ASR text; review proposals do not replace subtitles. |
 
-PDF is optional: install `python -m pip install -e '.[pdf]'`, run
-`python -m playwright install chromium`, and install fonts covering your languages.
-On Linux, Chromium may also need `python -m playwright install-deps chromium`.
-
-For URL input, batches, VAD omission auditing, progress events, review decisions,
-source relocation, and MCP, see [workflows](docs/WORKFLOWS.md). Pixel changes are
-sampled; tune the interval and thresholds for your recordings. Existing A/V timing
-is preserved, including stream offsets and variable frame rate. The program does
-not repair pre-existing audio delay or clock drift.
+PDF needs `python -m pip install -e '.[pdf]'`, `python -m playwright install chromium`,
+and fonts covering the recording's languages. On Linux, Chromium may also require
+`python -m playwright install-deps chromium`. The other formats do not need a browser.
 
 ## Documentation and development
 
-- [Installation and shared serving](docs/INSTALLATION.md)
-- [Transcription models, settings, and provenance](docs/TRANSCRIPTION.md)
-- [Workflows, CLI examples, Python API, and MCP](docs/WORKFLOWS.md)
-- [Natural-language agent guide](docs/AGENT_GUIDE.md)
-- [Agent operating instructions](AGENTS.md)
-- [Release scope](docs/ROADMAP.md) and [verification record](docs/VERIFICATION.md)
-- [Contributing](CONTRIBUTING.md) and [security](SECURITY.md)
+| Guide | Contents |
+| --- | --- |
+| [Installation](docs/INSTALLATION.md) | Local setup, agent installation prompts, remote clients, Docker, server administration. |
+| [Transcription specification](docs/TRANSCRIPTION.md) | Model sources, decoding, timestamps, VAD, and reproducibility boundaries. |
+| [Workflows](docs/WORKFLOWS.md) | Progress, resume, URLs/batches, review decisions, Python API, and MCP. |
+| [Agent guide](docs/AGENT_GUIDE.md) / [AGENTS.md](AGENTS.md) | Natural-language requests and the agent operating contract. |
+| [Release scope](docs/ROADMAP.md) / [verification](docs/VERIFICATION.md) | Implemented scope, executed checks, and limitations. |
+| [Security](SECURITY.md) | Data flow, deployment boundaries, and vulnerability reporting. |
 
 ```sh
 python -m unittest discover -s tests -v
 python scripts/check_demo.py
 ```
 
-Core tests require no model downloads. Media tests need FFmpeg and the media
-extra; MCP/URL tests need their respective extras. Set `AVTIMELINE_TEST_PDF=1`
-with Chromium installed to exercise PDF generation. CI covers a Linux/macOS/Windows
-core matrix, media integration, and Docker builds. See the verification record
-for checks actually executed; configured workflows alone do not prove support.
+Core tests require no model downloads. Optional media/MCP/URL tests need their
+extras; PDF tests additionally need Chromium and `AVTIMELINE_TEST_PDF=1`. CI runs a
+Linux/macOS/Windows core matrix, media integration, and Docker builds. This is not
+a WER/CER or performance benchmark. Sampling can miss visual events, and existing
+A/V delay or clock drift is not repaired.
 
-Repository code is [MIT licensed](LICENSE). Dependencies and model weights retain
-their own licenses. Recordings and work directories stay out of Git by default;
-the checked-in demo is a controlled synthetic example with documented provenance.
+## Contributing
+
+Bug reports, documentation improvements, and focused pull requests are welcome.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and Conventional
+Commit messages. Include a sanitized reproducer when reporting a problem;
+keep private recordings, credentials, and work directories out of Git.
+
+## Credits
+
+The pipeline uses [OpenAI Whisper](https://github.com/openai/whisper),
+[faster-whisper](https://github.com/SYSTRAN/faster-whisper), optional
+[MLX Whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper),
+[FFmpeg](https://ffmpeg.org/), and the optional packages listed in
+[pyproject.toml](pyproject.toml).
+
+README organization is inspired by
+[Markdownify](https://github.com/amitmerchant1990/electron-markdownify), selected
+from [awesome-readme](https://github.com/matiassingers/awesome-readme).
+
+## License
+
+[MIT](LICENSE). Dependencies and model weights retain their own licenses.
+The included demo is a controlled synthetic recording with documented provenance.
