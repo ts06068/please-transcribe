@@ -31,12 +31,15 @@ class ServiceTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         (self.root / "control").mkdir()
-        write_json(self.root / "control/status.json", {"state": "ready", "updated": time.time()})
         write_json(self.root / "keys.json", {"alice": "a-secret", "bob": "b-secret"})
         self.config = {"backend": "faster-whisper", "model": "fixture-model",
                        "max_upload_bytes": 100000, "max_pending": 2, "retention_days": 7}
         self.server = API(("127.0.0.1", 0), queue=self.root / "queue", control=self.root / "control",
                           keys=self.root / "keys.json", config=self.config)
+        # Server binding may perform slow hostname resolution on a CI runner.
+        # Start the simulated worker heartbeat after binding so it is fresh when
+        # the first request is made, as a live worker's heartbeat would be.
+        write_json(self.root / "control/status.json", {"state": "ready", "updated": time.time()})
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.connection = {"endpoint": f"http://127.0.0.1:{self.server.server_port}", "api_key": "a-secret"}
