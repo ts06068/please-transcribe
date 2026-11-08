@@ -1,0 +1,674 @@
+{
+  "schema_version": "1.0",
+  "manifest": {
+    "schema_version": "1.0",
+    "source": {
+      "name": "source.mp4",
+      "sha256": "fba0cb83677594855d325dd4e9072793d817fc0b548d89b9075d7159225f27ea"
+    },
+    "duration": 13.74625,
+    "source_time_origin": 0.0,
+    "timeline": "seconds from the earliest selected audio/video stream start",
+    "audio": "audio.wav",
+    "video_stream_index": 0,
+    "audio_stream_index": 1
+  },
+  "transcript": {
+    "schema_version": "1.0",
+    "backend": "remote",
+    "model": "mlx-community/whisper-large-v3-mlx",
+    "task": "transcribe",
+    "language": "en",
+    "segments": [
+      {
+        "id": "s000000",
+        "start": 0.0,
+        "end": 2.94,
+        "text": " This Python program prints result before defining it.",
+        "language": "en",
+        "words": [
+          {
+            "id": "s000000.w0000",
+            "start": 0.0,
+            "end": 0.1,
+            "text": " This",
+            "probability": 0.86376953125
+          },
+          {
+            "id": "s000000.w0001",
+            "start": 0.1,
+            "end": 0.44,
+            "text": " Python",
+            "probability": 0.7568359375
+          },
+          {
+            "id": "s000000.w0002",
+            "start": 0.44,
+            "end": 0.88,
+            "text": " program",
+            "probability": 0.97705078125
+          },
+          {
+            "id": "s000000.w0003",
+            "start": 0.88,
+            "end": 1.32,
+            "text": " prints",
+            "probability": 0.99755859375
+          },
+          {
+            "id": "s000000.w0004",
+            "start": 1.32,
+            "end": 1.66,
+            "text": " result",
+            "probability": 0.9833984375
+          },
+          {
+            "id": "s000000.w0005",
+            "start": 1.66,
+            "end": 2.02,
+            "text": " before",
+            "probability": 0.99072265625
+          },
+          {
+            "id": "s000000.w0006",
+            "start": 2.02,
+            "end": 2.58,
+            "text": " defining",
+            "probability": 0.99609375
+          },
+          {
+            "id": "s000000.w0007",
+            "start": 2.58,
+            "end": 2.94,
+            "text": " it.",
+            "probability": 0.99755859375
+          }
+        ],
+        "avg_logprob": -0.2352048328944615
+      },
+      {
+        "id": "s000001",
+        "start": 3.04,
+        "end": 4.78,
+        "text": " The traciback shows a name error.",
+        "language": "en",
+        "words": [
+          {
+            "id": "s000001.w0000",
+            "start": 3.04,
+            "end": 3.3,
+            "text": " The",
+            "probability": 0.9814453125
+          },
+          {
+            "id": "s000001.w0001",
+            "start": 3.3,
+            "end": 3.94,
+            "text": " traciback",
+            "probability": 0.5087890625
+          },
+          {
+            "id": "s000001.w0002",
+            "start": 3.94,
+            "end": 4.14,
+            "text": " shows",
+            "probability": 0.99169921875
+          },
+          {
+            "id": "s000001.w0003",
+            "start": 4.14,
+            "end": 4.36,
+            "text": " a",
+            "probability": 0.98486328125
+          },
+          {
+            "id": "s000001.w0004",
+            "start": 4.36,
+            "end": 4.56,
+            "text": " name",
+            "probability": 0.9814453125
+          },
+          {
+            "id": "s000001.w0005",
+            "start": 4.56,
+            "end": 4.78,
+            "text": " error.",
+            "probability": 0.99560546875
+          }
+        ],
+        "avg_logprob": -0.2352048328944615
+      },
+      {
+        "id": "s000002",
+        "start": 5.02,
+        "end": 6.7,
+        "text": " Na result is 6 times 7.",
+        "language": "en",
+        "words": [
+          {
+            "id": "s000002.w0000",
+            "start": 5.02,
+            "end": 5.26,
+            "text": " Na",
+            "probability": 0.25830078125
+          },
+          {
+            "id": "s000002.w0001",
+            "start": 5.26,
+            "end": 5.56,
+            "text": " result",
+            "probability": 0.51953125
+          },
+          {
+            "id": "s000002.w0002",
+            "start": 5.56,
+            "end": 5.82,
+            "text": " is",
+            "probability": 0.998046875
+          },
+          {
+            "id": "s000002.w0003",
+            "start": 5.82,
+            "end": 6.06,
+            "text": " 6",
+            "probability": 0.88818359375
+          },
+          {
+            "id": "s000002.w0004",
+            "start": 6.06,
+            "end": 6.3,
+            "text": " times",
+            "probability": 0.91845703125
+          },
+          {
+            "id": "s000002.w0005",
+            "start": 6.3,
+            "end": 6.7,
+            "text": " 7.",
+            "probability": 0.99853515625
+          }
+        ],
+        "avg_logprob": -0.2352048328944615
+      },
+      {
+        "id": "s000003",
+        "start": 6.92,
+        "end": 8.6,
+        "text": " Running the program prints 42.",
+        "language": "en",
+        "words": [
+          {
+            "id": "s000003.w0000",
+            "start": 6.92,
+            "end": 7.36,
+            "text": " Running",
+            "probability": 0.990234375
+          },
+          {
+            "id": "s000003.w0001",
+            "start": 7.36,
+            "end": 7.5,
+            "text": " the",
+            "probability": 0.9990234375
+          },
+          {
+            "id": "s000003.w0002",
+            "start": 7.5,
+            "end": 7.8,
+            "text": " program",
+            "probability": 0.99951171875
+          },
+          {
+            "id": "s000003.w0003",
+            "start": 7.8,
+            "end": 8.22,
+            "text": " prints",
+            "probability": 0.99755859375
+          },
+          {
+            "id": "s000003.w0004",
+            "start": 8.22,
+            "end": 8.6,
+            "text": " 42.",
+            "probability": 0.9931640625
+          }
+        ],
+        "avg_logprob": -0.2352048328944615
+      },
+      {
+        "id": "s000004",
+        "start": 9.04,
+        "end": 13.2,
+        "text": " Finally the program prints greetings in Korean, Spanish, and English.",
+        "language": "en",
+        "words": [
+          {
+            "id": "s000004.w0000",
+            "start": 9.04,
+            "end": 9.6,
+            "text": " Finally",
+            "probability": 0.9990234375
+          },
+          {
+            "id": "s000004.w0001",
+            "start": 9.6,
+            "end": 9.82,
+            "text": " the",
+            "probability": 0.93603515625
+          },
+          {
+            "id": "s000004.w0002",
+            "start": 9.82,
+            "end": 10.1,
+            "text": " program",
+            "probability": 0.99951171875
+          },
+          {
+            "id": "s000004.w0003",
+            "start": 10.1,
+            "end": 10.54,
+            "text": " prints",
+            "probability": 1.0
+          },
+          {
+            "id": "s000004.w0004",
+            "start": 10.54,
+            "end": 10.86,
+            "text": " greetings",
+            "probability": 0.9892578125
+          },
+          {
+            "id": "s000004.w0005",
+            "start": 10.86,
+            "end": 11.24,
+            "text": " in",
+            "probability": 0.99951171875
+          },
+          {
+            "id": "s000004.w0006",
+            "start": 11.24,
+            "end": 11.5,
+            "text": " Korean,",
+            "probability": 0.99365234375
+          },
+          {
+            "id": "s000004.w0007",
+            "start": 11.74,
+            "end": 12.22,
+            "text": " Spanish,",
+            "probability": 1.0
+          },
+          {
+            "id": "s000004.w0008",
+            "start": 12.58,
+            "end": 12.86,
+            "text": " and",
+            "probability": 0.99951171875
+          },
+          {
+            "id": "s000004.w0009",
+            "start": 12.86,
+            "end": 13.2,
+            "text": " English.",
+            "probability": 1.0
+          }
+        ],
+        "avg_logprob": -0.2352048328944615
+      }
+    ],
+    "multilingual": false,
+    "language_requested": "en",
+    "server_backend": "mlx"
+  },
+  "visual": {
+    "schema_version": "1.0",
+    "method": "sampled-global-and-tile-pixel-difference",
+    "parameters": {
+      "sample_interval": 0.5,
+      "image_interval": 3.0,
+      "change_threshold": 0.08,
+      "tile_threshold": 0.03,
+      "min_event_gap": 1,
+      "crop": null
+    },
+    "missing_pts_frames": 0,
+    "frames": [
+      {
+        "id": "f000000",
+        "time": 0.0,
+        "image": "frames/f000000.jpg",
+        "reasons": [
+          "periodic"
+        ]
+      },
+      {
+        "id": "f000001",
+        "time": 3.0,
+        "image": "frames/f000001.jpg",
+        "reasons": [
+          "periodic"
+        ]
+      },
+      {
+        "id": "f000002",
+        "time": 5.0,
+        "image": "frames/f000002.jpg",
+        "reasons": [
+          "before-change"
+        ]
+      },
+      {
+        "id": "f000003",
+        "time": 5.5,
+        "image": "frames/f000003.jpg",
+        "reasons": [
+          "at-change"
+        ]
+      },
+      {
+        "id": "f000004",
+        "time": 6.0,
+        "image": "frames/f000004.jpg",
+        "reasons": [
+          "after-change",
+          "periodic"
+        ]
+      },
+      {
+        "id": "f000005",
+        "time": 9.0,
+        "image": "frames/f000005.jpg",
+        "reasons": [
+          "periodic",
+          "before-change"
+        ]
+      },
+      {
+        "id": "f000006",
+        "time": 9.5,
+        "image": "frames/f000006.jpg",
+        "reasons": [
+          "at-change"
+        ]
+      },
+      {
+        "id": "f000007",
+        "time": 10.0,
+        "image": "frames/f000007.jpg",
+        "reasons": [
+          "after-change"
+        ]
+      },
+      {
+        "id": "f000008",
+        "time": 12.0,
+        "image": "frames/f000008.jpg",
+        "reasons": [
+          "periodic"
+        ]
+      },
+      {
+        "id": "f000009",
+        "time": 13.5,
+        "image": "frames/f000009.jpg",
+        "reasons": [
+          "last-sample"
+        ]
+      }
+    ],
+    "events": [
+      {
+        "id": "e000000",
+        "kind": "visual_change_candidate",
+        "time": 5.5,
+        "observed_between": [
+          5.0,
+          5.5
+        ],
+        "score": 0.013452,
+        "tile_score": 0.129893,
+        "frame_ids": [
+          "f000002",
+          "f000003",
+          "f000004"
+        ]
+      },
+      {
+        "id": "e000001",
+        "kind": "visual_change_candidate",
+        "time": 9.5,
+        "observed_between": [
+          9.0,
+          9.5
+        ],
+        "score": 0.008865,
+        "tile_score": 0.071732,
+        "frame_ids": [
+          "f000005",
+          "f000006",
+          "f000007"
+        ]
+      }
+    ],
+    "observed_video_end": 13.7,
+    "estimated_frame_durations": 0,
+    "note": "Visual changes are candidates, not semantic scene labels. Brief changes between samples may be missed."
+  },
+  "links": [
+    {
+      "segment_id": "s000000",
+      "frame_ids": [
+        "f000000",
+        "f000001",
+        "f000002",
+        "f000003",
+        "f000004"
+      ],
+      "event_ids": [
+        "e000000"
+      ],
+      "relationship": "temporal_context_only"
+    },
+    {
+      "segment_id": "s000001",
+      "frame_ids": [
+        "f000000",
+        "f000001",
+        "f000002",
+        "f000003",
+        "f000004",
+        "f000005",
+        "f000006"
+      ],
+      "event_ids": [
+        "e000000",
+        "e000001"
+      ],
+      "relationship": "temporal_context_only"
+    },
+    {
+      "segment_id": "s000002",
+      "frame_ids": [
+        "f000000",
+        "f000001",
+        "f000002",
+        "f000003",
+        "f000004",
+        "f000005",
+        "f000006",
+        "f000007"
+      ],
+      "event_ids": [
+        "e000000",
+        "e000001"
+      ],
+      "relationship": "temporal_context_only"
+    },
+    {
+      "segment_id": "s000003",
+      "frame_ids": [
+        "f000000",
+        "f000001",
+        "f000002",
+        "f000003",
+        "f000004",
+        "f000005",
+        "f000006",
+        "f000007",
+        "f000008",
+        "f000009"
+      ],
+      "event_ids": [
+        "e000000",
+        "e000001"
+      ],
+      "relationship": "temporal_context_only"
+    },
+    {
+      "segment_id": "s000004",
+      "frame_ids": [
+        "f000001",
+        "f000002",
+        "f000003",
+        "f000004",
+        "f000005",
+        "f000006",
+        "f000007",
+        "f000008",
+        "f000009"
+      ],
+      "event_ids": [
+        "e000000",
+        "e000001"
+      ],
+      "relationship": "temporal_context_only"
+    }
+  ],
+  "audit": {
+    "schema_version": "1.0",
+    "method": "silero-vad-vs-asr-time-coverage",
+    "note": "Candidates only. Coverage does not prove transcription completeness.",
+    "candidates": [
+      {
+        "start": 13.35,
+        "end": 13.74625,
+        "kind": "possible_missing_speech"
+      }
+    ]
+  },
+  "context_seconds": 5.0,
+  "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d",
+  "inspection": [
+    {
+      "id": "d2f8b2630ab803909-000",
+      "time": 5.0,
+      "image": "inspection/frames/d2f8b2630ab803909-000.jpg",
+      "reasons": [
+        "agent-requested-dense-sample"
+      ],
+      "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d"
+    },
+    {
+      "id": "d2f8b2630ab803909-001",
+      "time": 5.4,
+      "image": "inspection/frames/d2f8b2630ab803909-001.jpg",
+      "reasons": [
+        "agent-requested-dense-sample"
+      ],
+      "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d"
+    },
+    {
+      "id": "d2f8b2630ab803909-002",
+      "time": 5.8,
+      "image": "inspection/frames/d2f8b2630ab803909-002.jpg",
+      "reasons": [
+        "agent-requested-dense-sample"
+      ],
+      "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "7949c9ed490d4202836d1d9c568c2a85",
+      "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d",
+      "candidate_id": "c1008789cd6ad39d26b9f",
+      "proposal_id": "p6c2befcb6312910e771b",
+      "decision": "deferred",
+      "actor": "Demo reviewer",
+      "reason": "Audio was not inspected; preserve the baseline and proposed terminology separately.",
+      "audio_inspected": false,
+      "created": 1794134568.597989
+    }
+  ],
+  "review_status": {
+    "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d",
+    "segments_total": 5,
+    "reviewed": 2,
+    "audio_reviewed": 0,
+    "images_reviewed": 2,
+    "unreviewed_segment_ids": [
+      "s000000",
+      "s000002",
+      "s000004"
+    ],
+    "pending_candidate_ids": [
+      "c0f7067c561592f7a9906",
+      "c1008789cd6ad39d26b9f",
+      "c777f69aa69771e89a0d7",
+      "c58fb67eb4cf603e63123",
+      "cb6369896d71949ee3503"
+    ],
+    "candidates_total": 5,
+    "decisions": [
+      {
+        "id": "7949c9ed490d4202836d1d9c568c2a85",
+        "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d",
+        "candidate_id": "c1008789cd6ad39d26b9f",
+        "proposal_id": "p6c2befcb6312910e771b",
+        "decision": "deferred",
+        "actor": "Demo reviewer",
+        "reason": "Audio was not inspected; preserve the baseline and proposed terminology separately.",
+        "audio_inspected": false,
+        "created": 1794134568.597989
+      }
+    ],
+    "note": "Coverage records are reviewer attestations, not proof of ASR correctness."
+  },
+  "reviews": [
+    {
+      "snapshot": "3e3c0450d9fdaa35ede738606d975829c180f5c523a46c6593011850406bfb6d",
+      "reviewer": "Demo reviewer: screen inspection only; audio not inspected",
+      "corrections": [
+        {
+          "segment_id": "s000001",
+          "original_text": " The traciback shows a name error.",
+          "proposed_text": " The traceback shows a NameError.",
+          "reason": "The inspected screen contains Traceback and NameError. This is a terminology proposal pending audio inspection.",
+          "evidence_frame_ids": [
+            "f000000"
+          ]
+        }
+      ],
+      "event_annotations": [
+        {
+          "event_id": "e000000",
+          "description": "The screen changes from an undefined result variable and NameError to result = 6 * 7 with output 42.",
+          "related_segment_ids": [
+            "s000002",
+            "s000003"
+          ],
+          "evidence_frame_ids": [
+            "f000000",
+            "f000004"
+          ]
+        }
+      ],
+      "uncertainties": [
+        {
+          "segment_id": "s000002",
+          "reason": "The initial token is transcribed as Na. Compare the audio before changing it; the screen alone cannot establish the spoken word."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avtimeline"
+version = "0.1.0"
+description = "Multilingual transcripts linked to visual changes, with portable agent review bundles."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = ["transcription", "video", "whisper", "timeline", "mcp"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ts06068/please-transcribe"
+Documentation = "https://github.com/ts06068/please-transcribe#documentation-and-development"
+Issues = "https://github.com/ts06068/please-transcribe/issues"
+
+[project.optional-dependencies]
+media = ["av>=14,<20", "numpy>=1.26,<3", "Pillow>=10,<13"]
+cpu = ["faster-whisper>=1.1,<2"]
+mlx = ["mlx-whisper>=0.4,<1; sys_platform == 'darwin' and platform_machine == 'arm64'"]
+pdf = ["playwright>=1.49,<2"]
+url = ["yt-dlp>=2025.1.15"]
+mcp = ["mcp>=1.9,<2"]
+
+[project.scripts]
+avtimeline = "avtimeline.cli:main"
+please-transcribe = "avtimeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

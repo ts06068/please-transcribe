@@ -1,0 +1,17 @@
+services:
+  avtimeline:
+    build:
+      context: .
+      args:
+        WITH_PDF: ${WITH_PDF:-0}
+    volumes:
+      - ./work:/work
+      - models:/models
+    environment:
+      HF_HOME: /models
+    working_dir: /work
+    # CPU is the portable default. NVIDIA/CUDA requires a separately configured
+    # CUDA image/runtime; the default image does not include CUDA libraries.
+
+volumes:
+  models:

@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.940
+This Python program prints result before defining it.
+
+2
+00:00:03.040 --> 00:00:04.780
+The traciback shows a name error.
+
+3
+00:00:05.020 --> 00:00:06.700
+Na result is 6 times 7.
+
+4
+00:00:06.920 --> 00:00:08.600
+Running the program prints 42.
+
+5
+00:00:09.040 --> 00:00:13.200
+Finally the program prints greetings in Korean, Spanish, and English.

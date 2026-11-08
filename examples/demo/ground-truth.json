@@ -1,0 +1,37 @@
+{
+  "kind": "controlled synthetic demo",
+  "narration_source": "TTS or supplied recording",
+  "phases": [
+    {
+      "title": "1. Investigate the error",
+      "code": "print(result)",
+      "narration": "This Python program prints result before defining it. The traceback shows a NameError.",
+      "start": 0,
+      "end": 5.234467,
+      "process_output": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nNameError: name 'result' is not defined\n",
+      "exit_code": 1,
+      "image": "phase-0.png"
+    },
+    {
+      "title": "2. Define the missing variable",
+      "code": "result = 6 * 7\nprint(result)",
+      "narration": "Now result is six times seven. Running the program prints forty-two.",
+      "start": 5.234467,
+      "end": 9.28136,
+      "process_output": "42\n",
+      "exit_code": 0,
+      "image": "phase-1.png"
+    },
+    {
+      "title": "3. Keep the original languages",
+      "code": "print('안녕하세요 / Hola / Hello')",
+      "narration": "Finally the program prints greetings in Korean, Spanish, and English.",
+      "start": 9.28136,
+      "end": 13.729433,
+      "process_output": "안녕하세요 / Hola / Hello\n",
+      "exit_code": 0,
+      "image": "phase-2.png"
+    }
+  ],
+  "note": "Narration text is the synthesis script, not a human-audited transcript."
+}

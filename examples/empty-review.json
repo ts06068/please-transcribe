@@ -1,0 +1,7 @@
+{
+  "snapshot": "COPY_THE_SNAPSHOT_FROM_REVIEW_REQUEST_JSON",
+  "reviewer": "your-harness-and-model",
+  "corrections": [],
+  "event_annotations": [],
+  "uncertainties": []
+}
